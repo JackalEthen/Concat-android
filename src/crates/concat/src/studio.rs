@@ -5997,8 +5997,10 @@ impl Studio {
     }
 
     pub fn menu_height(rows: &[MenuItemData]) -> f32 {
+        // ponytail: tracks MenuMetrics.action in context-menu.slint — 40px
+        // touch rows everywhere, one number in two places.
         let metrics = |kind: MenuRow| match kind {
-            MenuRow::Action => 26.0,
+            MenuRow::Action => 40.0,
             MenuRow::Label => 24.0,
             MenuRow::Separator => 9.0,
         };
@@ -6165,6 +6167,13 @@ impl Studio {
                 rule(),
                 row("start", t("Go to start"), Glyph::SkipBack, "Home", true),
                 row("end", t("Go to end"), Glyph::SkipForward, "End", true),
+            ],
+            // The compact hamburger: one list of the three strips. Picking a
+            // row opens that menu in the same surface.
+            -2 => vec![
+                row("menu-file", t("File"), Glyph::Slot, "", true),
+                row("menu-edit", t("Edit"), Glyph::Pointer, "", true),
+                row("menu-view", t("View"), Glyph::Fit, "", true),
             ],
             _ => Vec::new(),
         }

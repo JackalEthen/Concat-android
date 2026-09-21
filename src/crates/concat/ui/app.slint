@@ -76,10 +76,11 @@ export component App inherits Window {
     default-font-weight: Theme.weight-body;
     preferred-width: 1400px;
     preferred-height: 900px;
-    // Below this the three columns cannot all hold their minimum and the panes
-    // start eating each other.
-    min-width: 900px;
-    min-height: 560px;
+    // ponytail: was 900x560 desktop floor. 320 lets a phone reach the
+    // compact dock (COMPACT_WIDTH = 860); the three-column layout only
+    // shows when the window is wide, so the old floor's reason is gone.
+    min-width: 320px;
+    min-height: 480px;
     // So the shortcuts work before anything has been clicked. Without it the
     // window opens with nothing focused, and a key would have nowhere to be
     // delivered from until the first press landed somewhere.
@@ -157,6 +158,10 @@ export component App inherits Window {
     /// Draw minimise / maximise / close on the strip. False on macOS, where
     /// the traffic lights are the window's own.
     in property <bool> own-window-buttons;
+    /// Narrow window, same threshold as the dock's COMPACT_WIDTH. Derived
+    /// from the window's own width, so the start screen and the dialogs
+    /// follow it without a round trip through Rust.
+    in-out property <bool> compact: root.width < 860px;
     /// Read back from the platform on every resize, so the strip can show
     /// restore rather than maximise - whichever route maximised it.
     in-out property <bool> window-maximized;
@@ -195,6 +200,8 @@ export component App inherits Window {
 
     callback settings-closed();
     callback settings-page-changed(index: int);
+    callback settings-compact-forward();
+    callback settings-compact-back();
     callback settings-show-log();
     callback settings-language-changed(index: int);
     callback settings-theme-changed(dark: bool);
@@ -414,6 +421,7 @@ export component App inherits Window {
             TitleBar {
                 macos: root.macos;
                 minimal: root.on-start;
+                compact: root.compact;
                 project-name: root.project-name;
                 status: root.project-status;
 
@@ -421,7 +429,10 @@ export component App inherits Window {
                 menu-opened(index, at-x) => {
                     // Under the strip, which is 32px tall - both measured
                     // from the window's corner, past the system's bars.
-                    appmenu.request-x = at-x + root.safe-area-insets.left;
+                    // Left-aligned for the hamburger (-2), label-aligned for
+                    // the three desktop labels.
+                    appmenu.request-x = (index == -2 ? 8px : at-x)
+                        + root.safe-area-insets.left;
                     appmenu.request-y = 32px + root.safe-area-insets.top;
                     root.menu-opened(index);
                 }
@@ -507,6 +518,9 @@ export component App inherits Window {
 
         closed => { root.settings-closed(); }
         page-changed(index) => { root.settings-page-changed(index); }
+        compact: root.compact;
+        compact-forward => { root.settings-compact-forward(); }
+        compact-back => { root.settings-compact-back(); }
         show-log => { root.settings-show-log(); }
         language-changed(index) => { root.settings-language-changed(index); }
         theme-changed(dark) => { root.settings-theme-changed(dark); }

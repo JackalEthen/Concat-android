@@ -80,11 +80,13 @@ component MenuLabel inherits Rectangle {
 
 component HeaderIconButton inherits Rectangle {
     in property <Glyph> glyph;
+    /// Wide enough for a finger; the desktop default stays 24px.
+    in property <length> size: 24px;
 
     callback clicked();
 
-    width: 24px;
-    height: 24px;
+    width: root.size;
+    height: root.size;
     border-radius: Theme.r-sm;
     background: touch.has-hover ? Theme.field : Colors.transparent;
 
@@ -116,6 +118,9 @@ export component TitleBar inherits Rectangle {
     /// act on an edit, and on this screen there is neither — a strip of
     /// controls that all refuse is worse than a strip without them.
     in property <bool> minimal;
+    /// Narrow window: icon-only strip. The wordmark text and the three menu
+    /// labels go, a hamburger opens File / Edit / View as a list instead.
+    in property <bool> compact;
 
     /// Draw the window buttons at the right: true wherever the platform's
     /// decorations were taken off, which is everywhere but macOS.
@@ -129,7 +134,8 @@ export component TitleBar inherits Rectangle {
     callback minimize();
     callback close();
     /// A menu was asked for: which one, and where its label sits in the strip,
-    /// so the sheet can hang off it.
+    /// so the sheet can hang off it. `-2` is the compact hamburger: Rust opens
+    /// the File menu's list of all three strips in its place.
     callback menu-opened(index: int, at-x: length);
     /// Which menu is open, or -1.
     in property <int> menu: -1;
@@ -185,7 +191,18 @@ export component TitleBar inherits Rectangle {
             }
         }
 
-        VerticalLayout {
+        // The hamburger replaces the three menu labels on a narrow strip:
+        // one list of the three, opened where the button is.
+        if root.compact && !root.minimal: VerticalLayout {
+            alignment: center;
+            HeaderIconButton {
+                glyph: Glyph.hamburger;
+                size: 28px;
+                clicked => { root.menu-opened(-2, 0); }
+            }
+        }
+
+        if !root.compact: VerticalLayout {
             alignment: center;
             padding-left: 6px;
             padding-right: 6px;
@@ -197,24 +214,50 @@ export component TitleBar inherits Rectangle {
             }
         }
 
+        // The project name sits beside the hamburger on a narrow strip: the
+        // one fact a phone's strip still has room for, elided when it will
+        // not fit. The centre placement the wide strip gives it is lost, but
+        // the strip is a third of the width to begin with.
+        if root.compact && !root.minimal: VerticalLayout {
+            alignment: center;
+            padding-left: 4px;
+
+            HorizontalLayout {
+                spacing: 6px;
+                Text {
+                    text: root.project-name;
+                    color: Theme.fg-muted;
+                    font-size: Theme.fs;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                Text {
+                    text: root.status;
+                    color: Theme.fg-dim;
+                    font-size: Theme.fs-xs;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
         // Each label reports its own position rather than a fixed one: they
         // are sized from their text, so where "View" starts depends on how
         // long "File" and "Edit" are.
-        if !root.minimal: file := MenuLabel {
+        if !root.minimal && !root.compact: file := MenuLabel {
             label: I18n.t("File");
             current: root.menu == 0;
             clicked => {
                 root.menu-opened(0, file.absolute-position.x - root.absolute-position.x);
             }
         }
-        if !root.minimal: edit := MenuLabel {
+        if !root.minimal && !root.compact: edit := MenuLabel {
             label: I18n.t("Edit");
             current: root.menu == 1;
             clicked => {
                 root.menu-opened(1, edit.absolute-position.x - root.absolute-position.x);
             }
         }
-        if !root.minimal: view := MenuLabel {
+        if !root.minimal && !root.compact: view := MenuLabel {
             label: I18n.t("View");
             current: root.menu == 2;
             clicked => {
@@ -311,9 +354,10 @@ export component TitleBar inherits Rectangle {
 
     // Centre: the project name, placed against the whole strip rather than
     // laid out, so it stays centred in the window and not in whatever space
-    // the menus leave over.
+    // the menus leave over. A compact strip carries the name inline instead
+    // — centring it over four buttons is how it lands on them.
     centre := HorizontalLayout {
-        visible: !root.minimal;
+        visible: !root.minimal && !root.compact;
         x: (parent.width - self.preferred-width) / 2;
         y: 0;
         width: self.preferred-width;

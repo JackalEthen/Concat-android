@@ -48,7 +48,9 @@ export component Modal inherits Rectangle {
     surface := Rectangle {
         x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2;
-        width: root.surface-width;
+        // ponytail: clamped to the window so every sheet survives a phone;
+        // 24px of scrim either side keeps the dialog off the window edge.
+        width: min(root.surface-width, parent.width - 24px);
         height: root.surface-height > 0px ? root.surface-height : body.preferred-height;
         background: Theme.panel;
         border-width: 1px;

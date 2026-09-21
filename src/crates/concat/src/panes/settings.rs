@@ -132,6 +132,10 @@ pub fn installed(models: &[ModelState]) -> Vec<&ModelState> {
 pub struct SettingsPane {
     pub open: bool,
     pub tab: i32,
+    /// ponytail: compact two-level navigation — false shows the page list,
+    /// true shows the page itself. Rust carries it so a reopened sheet lands
+    /// on the list again.
+    pub sub_open: bool,
     pub language: usize,
     /// The switch that keeps the playhead inside the content.
     pub playhead_stops: bool,
@@ -178,6 +182,7 @@ impl SettingsPane {
             SettingsMsg::Open => {
                 self.refresh(studio);
                 self.open = true;
+                self.sub_open = false;
             }
             SettingsMsg::Close => self.open = false,
             SettingsMsg::PageChanged(index) => self.tab = index,
@@ -554,6 +559,7 @@ impl SettingsPane {
         SettingsData {
             open: self.open,
             tab: self.tab,
+            sub_open: self.sub_open,
             language: self.language as i32,
             playhead_stops: self.playhead_stops,
             custom_context_actions: self.custom_context_actions,

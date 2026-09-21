@@ -46,12 +46,17 @@ export struct MenuItemData {
 }
 
 /// Row heights, so the caller can add them up without guessing.
+/// ponytail: 40px actions — phone-height rows everywhere; a desktop menu
+/// with generous rows still reads fine, and one height keeps Rust's
+/// `menu_height` in step without a second code path.
 export global MenuMetrics {
-    out property <length> action: 26px;
+    out property <length> action: 40px;
     out property <length> label: 24px;
     out property <length> separator: 9px;
     /// the surface's own padding, top and bottom together
     out property <length> padding: 12px;
+    /// Clamped to the window by the ContextMenu itself, so a phone's
+    /// 320px keeps the menu on screen.
     out property <length> width: 220px;
 }
 
@@ -65,6 +70,9 @@ export component ContextMenu inherits Rectangle {
     /// Where the menu was asked for, in this element's own coordinates.
     property <length> at-x;
     property <length> at-y;
+    /// The width this open took: `MenuMetrics.width` clamped to the window,
+    /// so a phone never hangs a 220px menu off its edge.
+    property <length> menu-w: MenuMetrics.width;
 
     /// Opened by a token rather than a flag: the surface can be dismissed by a
     /// click outside without telling anyone, so a boolean the caller sets would
@@ -80,10 +88,11 @@ export component ContextMenu inherits Rectangle {
         // worse than none. It also lets a caller bump unconditionally, which
         // is what keeps the arming in lanes.slint honest.
         if (root.token > 0 && root.items.length > 0) {
-            // Flipped back over the pointer near an edge, so the menu is
-            // always fully on screen and always touching the click.
-            root.at-x = root.request-x + MenuMetrics.width > root.width
-                ? Math.max(0px, root.request-x - MenuMetrics.width)
+            // Width clamped to the window first, then flipped back over the
+            // pointer near an edge, so the menu is always fully on screen.
+            root.menu-w = min(MenuMetrics.width, root.width - 8px);
+            root.at-x = root.request-x + root.menu-w > root.width
+                ? Math.max(0px, root.request-x - root.menu-w)
                 : root.request-x;
             root.at-y = root.request-y + root.menu-height > root.height
                 ? Math.max(0px, root.request-y - root.menu-height)
@@ -97,7 +106,7 @@ export component ContextMenu inherits Rectangle {
     surface := PopupWindow {
         x: root.at-x;
         y: root.at-y;
-        width: MenuMetrics.width;
+        width: root.menu-w;
         height: root.menu-height;
         close-policy: close-on-click-outside;
 

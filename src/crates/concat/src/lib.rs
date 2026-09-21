@@ -1035,6 +1035,13 @@ pub fn run() -> Result<(), slint::PlatformError> {
     app.on_settings_page_changed(on_window!(|state, index: i32| {
         state.handle(Msg::Settings(SettingsMsg::PageChanged(index)));
     }));
+    // Compact two-level navigation: forward into a page, back to the list.
+    app.on_settings_compact_forward(on_window!(|state| {
+        state.settings.sub_open = true;
+    }));
+    app.on_settings_compact_back(on_window!(|state| {
+        state.settings.sub_open = false;
+    }));
     app.on_settings_show_log(on_window!(|state| {
         state.handle(Msg::Settings(SettingsMsg::ShowLog));
     }));
@@ -1154,7 +1161,22 @@ pub fn run() -> Result<(), slint::PlatformError> {
             Shell::with(|shell, app| {
                 {
                     let mut state = shell.studio.borrow_mut();
-                    state.open_menu = -1;
+                    // The hamburger's list of strips: picking one opens that
+                    // menu in the same surface instead of acting itself.
+                    match action.as_str() {
+                        "menu-file" => state.open_menu = 0,
+                        "menu-edit" => state.open_menu = 1,
+                        "menu-view" => state.open_menu = 2,
+                        _ => state.open_menu = -1,
+                    }
+                    if state.open_menu >= 0 {
+                        state.menu_bar_token += 1;
+                        let open = state.open_menu;
+                        drop(state);
+                        app.invoke_menu_opened(open);
+                        return;
+                    }
+                    let mut state = shell.studio.borrow_mut();
                     match action.as_str() {
                         "add-selected" => state.handle(Msg::Media(MediaMsg::AddSelectedAtPlayhead)),
                         "open" => {
