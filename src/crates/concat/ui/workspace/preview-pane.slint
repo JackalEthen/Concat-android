@@ -949,11 +949,13 @@ export component PreviewPane inherits Rectangle {
                 padding-bottom: 4px;
                 spacing: 2px;
 
-                // Row 1: where the playhead is, centred.
+                // Row 1: where the playhead is, centred against the row —
+                // two stretch spacers either side, not an end-aligned group
+                // plus a guessed 40px.
                 HorizontalLayout {
+                    Rectangle { horizontal-stretch: 1; }
+
                     HorizontalLayout {
-                        horizontal-stretch: 1;
-                        alignment: end;
                         spacing: 8px;
 
                         VerticalLayout {
@@ -990,12 +992,7 @@ export component PreviewPane inherits Rectangle {
                         }
                     }
 
-                    // Balance the centring: the trailing readout is wider
-                    // than the leading number field alone.
-                    Rectangle {
-                        width: 40px;
-                        horizontal-stretch: 1;
-                    }
+                    Rectangle { horizontal-stretch: 1; }
                 }
 
                 // Row 2: the transport and the view controls together.
