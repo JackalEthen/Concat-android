@@ -95,18 +95,34 @@ export component TimelineTray inherits Rectangle {
 
     // ponytail: the tray scrolls instead of clipping — a phone's 380px
     // cannot hold twenty-odd buttons, and a row you can drag beats a row
-    // that eats its right half.
+    // that eats its right half. One TouchArea as the row's *ancestor*
+    // rather than a sibling: drags and wheels anywhere reach it, buttons
+    // still take their own presses, and empty space past the row pans too.
     property <length> tray-overflow: Math.max(0px, row.preferred-width - root.width);
     property <length> tray-x;
 
-    Flickable {
+    drag := TouchArea {
         x: 0;
         y: 0;
         width: parent.width;
         height: parent.height;
-        viewport-width: row.preferred-width;
-        viewport-height: parent.height;
-        interactive: false;
+
+        property <length> press-x;
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down) {
+                self.press-x = self.absolute-position.x + self.mouse-x + root.tray-x;
+            }
+        }
+        moved => {
+            root.tray-x = Math.max(0px,
+                Math.min(root.tray-overflow,
+                    self.press-x - self.absolute-position.x - self.mouse-x));
+        }
+        scroll-event(event) => {
+            root.tray-x = Math.max(0px,
+                Math.min(root.tray-overflow, root.tray-x - event.delta-x));
+            return EventResult.accept;
+        }
 
         row := HorizontalLayout {
             x: -root.tray-x;
@@ -115,28 +131,6 @@ export component TimelineTray inherits Rectangle {
             padding-top: 7px;
             padding-bottom: 7px;
             spacing: 4px;
-
-            drag := TouchArea {
-                // The scroll gesture lives here; buttons get their own
-                // presses, a drag that starts on one scrolls the row.
-                property <length> press-x;
-                pointer-event(event) => {
-                    if (event.kind == PointerEventKind.down) {
-                        self.press-x = self.absolute-position.x + self.mouse-x
-                            + root.tray-x;
-                    }
-                }
-                moved => {
-                    root.tray-x = Math.max(0px,
-                        Math.min(root.tray-overflow,
-                            self.press-x - self.absolute-position.x - self.mouse-x));
-                }
-                scroll-event(event) => {
-                    root.tray-x = Math.max(0px,
-                        Math.min(root.tray-overflow, root.tray-x - event.delta-x));
-                    return EventResult.accept;
-                }
-            }
 
             IconButton {
                 glyph: Glyph.plus;

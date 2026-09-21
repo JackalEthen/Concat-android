@@ -108,19 +108,10 @@ export component TimelinePane inherits Rectangle {
     /// Wide enough for what the column actually carries, and no wider: every
     /// pixel here is a pixel the lanes do not get.
     ///
-    /// ponytail: the switches are two rows of three now (size + lock, then
-    /// show + mute + remove), so the column's floor drops from five 26px
-    /// slots to three. 110px holds two rows of three 26px chips with their
-    /// gutters; below that the row has nowhere left to take the squeeze
-    /// from and the buttons overlap.
-    in-out property <length> header-width: 120px;
-    /// The switches and their gutters, and nothing spare: below this the row
-    /// has nowhere left to take the squeeze from and the buttons overlap.
-    in property <length> min-header: 96px;
-
-    /// Where the column was when the divider went down. A drag is one pointer,
-    /// so one slot is enough.
-    property <length> press-width;
+    /// ponytail: fixed. Four rows of one 26px switch (size, lock, show,
+    /// mute) plus their padding come to 40px wide; 44px leaves a breath
+    /// either side and never moves, so there is no splitter to drag.
+    in property <length> header-width: 44px;
 
     /// The column as it is actually drawn.
     ///
@@ -242,14 +233,7 @@ export component TimelinePane inherits Rectangle {
                 x: root.headers-w;
                 y: 0;
                 height: parent.height;
-
-                pressed => { root.press-width = root.header-width; }
-                moved(delta) => {
-                    // Capped at half the pane as well as floored: a header
-                    // column dragged past the lanes leaves nothing to edit.
-                    root.header-width = Math.max(root.min-header,
-                        Math.min(parent.width / 2, root.press-width + delta));
-                }
+                visible: false;
             }
 
             lanes := Lanes {

@@ -218,8 +218,10 @@ pub fn report_startup_failure(error: &str) {
 
 /// Whether the strip should draw its own window buttons: everywhere the
 /// platform's decorations were taken off, which is everywhere but macOS,
-/// where the traffic lights stay the window's.
-pub const OWN_WINDOW_BUTTONS: bool = !MACOS;
+/// where the traffic lights stay the window's — and not Android, where a
+/// fullscreen activity has nothing to minimise, maximise or close, and
+/// three dead buttons would sit in the strip's corner.
+pub const OWN_WINDOW_BUTTONS: bool = !(MACOS || cfg!(target_os = "android"));
 
 /// Minimises the window: the strip's first button.
 pub fn minimize(window: &slint::Window) {
