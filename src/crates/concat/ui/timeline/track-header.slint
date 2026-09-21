@@ -24,113 +24,32 @@ import { TrackData, TrackSize } from "model.slint";
 // The bar that drives it lives here, at the edge of this column: the one
 // place a stack of lanes can carry a scrollbar without landing on top of a
 // clip.
-
-// The row-height dropdown, one per lane.
 //
-// A menu and not a cycling button: four values is one too many to walk
-// through blind, and the list is also where "Auto" gets to say that it is the
-// default rather than a fourth size. Sized and placed like the switches beside
-// it, so the row reads as one strip of controls.
-component SizeMenu inherits Rectangle {
-    in property <TrackSize> current;
-
-    callback picked(size: TrackSize);
-
-    width: 26px;
-    min-height: 26px;
-
-    property <[string]> labels: [I18n.t("Auto"), I18n.t("Small"), I18n.t("Medium"), I18n.t("Large")];
-    property <length> row-h: 24px;
-    /// The two directions between a TrackSize and its row. Slint has no map,
-    /// and four values do not earn one.
-    pure function chosen() -> int {
-        return root.current == TrackSize.small ? 1
-            : root.current == TrackSize.medium ? 2
-            : root.current == TrackSize.large ? 3
-            : 0;
-    }
-    pure function size-at(index: int) -> TrackSize {
-        return index == 1 ? TrackSize.small
-            : index == 2 ? TrackSize.medium
-            : index == 3 ? TrackSize.large
-            : TrackSize.auto;
-    }
-
-    IconButton {
-        glyph: Glyph.rows;
-        label: I18n.t("Row height");
-        icon-size: 12px;
-        // Lit only when the lane has been sized by hand: auto is the resting
-        // state, and a button lit on every row would say nothing.
-        checked: root.current != TrackSize.auto;
-        clicked => { list.show(); }
-    }
-
-    list := PopupWindow {
-        // Hung from the button's trailing edge rather than its leading one:
-        // this is the last control in the row on a narrow column, and a list
-        // opening rightwards would open off the pane.
-        x: 26px - self.width;
-        y: 26px;
-        width: 116px;
-        height: 4 * root.row-h + 8px;
-        close-policy: close-on-click-outside;
-
-        Rectangle {
-            background: Theme.raised;
-            border-width: 1px;
-            border-color: Theme.line-strong;
-            border-radius: Theme.r;
-            clip: true;
-
-            VerticalLayout {
-                padding: 4px;
-                alignment: start;
-
-                for label[index] in root.labels: Rectangle {
-                    height: root.row-h;
-                    border-radius: Theme.r-sm;
-                    background: pick.has-hover ? Theme.field-hover : Colors.transparent;
-
-                    HorizontalLayout {
-                        padding-left: 8px;
-                        padding-right: 8px;
-                        spacing: 6px;
-
-                        Text {
-                            horizontal-stretch: 1;
-                            text: label;
-                            color: pick.has-hover ? Theme.fg : Theme.fg-muted;
-                            font-size: Theme.fs;
-                            vertical-alignment: center;
-                        }
-
-                        if index == root.chosen(): VerticalLayout {
-                            alignment: center;
-                            Icon { glyph: Glyph.check; size: 12px; tint: Theme.accent; }
-                        }
-                    }
-
-                    pick := TouchArea {
-                        mouse-cursor: pointer;
-                        clicked => {
-                            root.picked(root.size-at(index));
-                            list.close();
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+// ponytail: the row-height menu is gone — four sizes were one more decision
+// than a phone's editor earns, and the lane heights are the defaults now.
+// Remove is a long-press overlay, not a fourth row: held 550ms, a scrim
+// lifts over the three switches and the cross floats on it.
 
 component Header inherits Rectangle {
     in property <TrackData> track;
     in property <bool> removable;
 
     callback flag-changed(visible: bool, muted: bool, locked: bool);
-    callback sized(size: TrackSize);
     callback removed();
+
+    // ponytail: the long-press state sits on the component root so the
+    // timer, the scrim and the cross can all reach it — Slint will not let
+    // one element write another's properties.
+    property <bool> remove-armed;
+    property <bool> hold-live;
+    hold-timer := Timer {
+        interval: 550ms;
+        running: row.pressed && root.hold-live && !root.remove-armed;
+        triggered => {
+            root.hold-live = false;
+            root.remove-armed = true;
+        }
+    }
 
     Rectangle {
         x: 0;
@@ -141,23 +60,38 @@ component Header inherits Rectangle {
     }
 
     row := TouchArea {
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down) {
+                self.press-x = self.absolute-position.x + self.mouse-x;
+                self.press-y = self.absolute-position.y + self.mouse-y;
+                root.hold-live = root.removable;
+            } else if (event.kind == PointerEventKind.up
+                || event.kind == PointerEventKind.cancel) {
+                root.hold-live = false;
+                root.remove-armed = false;
+            }
+        }
+        moved => {
+            // A press that strays past 8px is a scroll of the stack, not a
+            // hold: the arm drops, the same slop the clips' long-press uses.
+            if (root.hold-live
+                && ((self.absolute-position.x + self.mouse-x - self.press-x).abs() > 8px
+                    || (self.absolute-position.y + self.mouse-y - self.press-y).abs() > 8px)) {
+                root.hold-live = false;
+            }
+        }
+        property <length> press-x;
+        property <length> press-y;
+
         VerticalLayout {
             padding-left: 5px;
             padding-right: 4px;
             padding-top: 2px;
             padding-bottom: 2px;
             spacing: 0px;
-            // ponytail: one switch per row, four rows — the two-row grid
-            // still fought a 62px lane. Each row centres its chip; the
-            // remove keeps its slot and its hover reveal.
-
-            VerticalLayout {
-                alignment: center;
-                SizeMenu {
-                    current: root.track.size;
-                    picked(size) => { root.sized(size); }
-                }
-            }
+            // ponytail: three switches, one per row, tighter than the tray —
+            // 2px between chips. The long-press scrim covers all three and
+            // the cross floats over it, so remove costs no row of its own.
 
             VerticalLayout {
                 alignment: center;
@@ -167,8 +101,10 @@ component Header inherits Rectangle {
                     icon-size: 12px;
                     checked: root.track.locked;
                     clicked => {
-                        root.flag-changed(root.track.visible, root.track.muted,
-                            !root.track.locked);
+                        if (!root.remove-armed) {
+                            root.flag-changed(root.track.visible, root.track.muted,
+                                !root.track.locked);
+                        }
                     }
                 }
             }
@@ -184,19 +120,59 @@ component Header inherits Rectangle {
                     icon-size: 12px;
                     checked: !root.track.visible;
                     clicked => {
-                        root.flag-changed(!root.track.visible, root.track.muted,
-                            root.track.locked);
+                        if (!root.remove-armed) {
+                            root.flag-changed(!root.track.visible, root.track.muted,
+                                root.track.locked);
+                        }
                     }
                 }
             }
 
             VerticalLayout {
                 alignment: center;
-                width: 26px;
-                if root.removable && row.has-hover: IconButton {
-                    glyph: Glyph.close;
+                IconButton {
+                    glyph: root.track.muted ? Glyph.volume-off : Glyph.volume;
+                    label: root.track.muted ? I18n.t("Unmute lane") : I18n.t("Mute lane");
+                    icon-size: 12px;
+                    checked: root.track.muted;
+                    clicked => {
+                        if (!root.remove-armed) {
+                            root.flag-changed(root.track.visible, !root.track.muted,
+                                root.track.locked);
+                        }
+                    }
+                }
+            }
+        }
+
+        // The long-press scrim and the cross, over the switches. The press
+        // that armed it is still held, so this TouchArea takes the release
+        // that confirms the removal.
+        if root.remove-armed: Rectangle {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: parent.height;
+            background: Theme.scrim.with-alpha(0.55);
+            border-radius: Theme.r-sm;
+
+            TouchArea {
+                pointer-event(event) => {
+                    if (event.kind == PointerEventKind.up
+                        || event.kind == PointerEventKind.cancel) {
+                        root.hold-live = false;
+                        root.remove-armed = false;
+                    }
+                }
+                clicked => { root.removed(); }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                IconButton {
+                    glyph: Glyph.trash;
                     label: I18n.t("Remove lane");
-                    icon-size: 11px;
+                    icon-size: 16px;
                     danger: true;
                     clicked => { root.removed(); }
                 }
@@ -221,7 +197,6 @@ export component TrackHeaders inherits Rectangle {
     callback scrolled(offset: length);
 
     callback flag-changed(index: int, visible: bool, muted: bool, locked: bool);
-    callback sized(index: int, size: TrackSize);
     callback removed(index: int);
 
     clip: true;
@@ -259,7 +234,6 @@ export component TrackHeaders inherits Rectangle {
             flag-changed(visible, muted, locked) => {
                 root.flag-changed(index, visible, muted, locked);
             }
-            sized(size) => { root.sized(index, size); }
             removed => { root.removed(index); }
         }
 

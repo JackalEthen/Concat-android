@@ -6,10 +6,9 @@ import { Fmt } from "../util.slint";
 import { Pane } from "pane.slint";
 import { PaneKind, PaneSwitcher } from "pane-switcher.slint";
 import { MenuItemData } from "../primitives/context-menu.slint";
-import { HairlineSplitter } from "splitter.slint";
 import { ThinScrollbar } from "../primitives/scrollbar.slint";
 import {
-    ClipData, DropData, TimelineTabData, TimelineTool, TrackData, TrackSize,
+    ClipData, DropData, TimelineTabData, TimelineTool, TrackData,
 } from "../timeline/model.slint";
 import { TimelineTabs } from "../timeline/tabs.slint";
 import { TimelineTray } from "../timeline/tray.slint";
@@ -91,7 +90,6 @@ export component TimelinePane inherits Rectangle {
     callback drag-hovered(payload: string, seconds: float, y: length);
     callback dropped(payload: string, seconds: float, y: length);
     callback track-flag-changed(index: int, visible: bool, muted: bool, locked: bool);
-    callback track-sized(index: int, size: TrackSize);
     callback track-removed(index: int);
 
     /// The corner button: show something else in this pane's seat.
@@ -225,15 +223,7 @@ export component TimelinePane inherits Rectangle {
                 flag-changed(index, visible, muted, locked) => {
                     root.track-flag-changed(index, visible, muted, locked);
                 }
-                sized(index, size) => { root.track-sized(index, size); }
                 removed(index) => { root.track-removed(index); }
-            }
-
-            HairlineSplitter {
-                x: root.headers-w;
-                y: 0;
-                height: parent.height;
-                visible: false;
             }
 
             lanes := Lanes {

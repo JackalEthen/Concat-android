@@ -6224,12 +6224,6 @@ impl Studio {
         }
     }
 
-    pub fn set_lane_size(&mut self, row: i32, size: TrackSize) {
-        if let Some(id) = self.row_track(row).map(|track| track.id.clone()) {
-            self.lanes.lane_view.entry(id).or_default().size = size;
-        }
-    }
-
     pub fn toggle_flip_h(&mut self) {
         if self.selection.is_empty() {
             return;
