@@ -108,18 +108,15 @@ export component TimelinePane inherits Rectangle {
     /// Wide enough for what the column actually carries, and no wider: every
     /// pixel here is a pixel the lanes do not get.
     ///
-    /// A lane has no name — it is untyped, and its place in the stack is the
-    /// only handle anything needs on it — so the column is a strip of
-    /// switches. Five 26px slots at their widest (row height, lock,
-    /// visibility, mute against the leading edge; remove alone against the
-    /// trailing one, shown on hover), 1px between them and the row's own
-    /// 8px and 4px gutters come to 147px. The rest is the gap between the
-    /// two ends, which at the old 156px was nine pixels and read as one
-    /// crammed strip beside the lanes it labels.
-    in-out property <length> header-width: 188px;
+    /// ponytail: the switches are two rows of three now (size + lock, then
+    /// show + mute + remove), so the column's floor drops from five 26px
+    /// slots to three. 110px holds two rows of three 26px chips with their
+    /// gutters; below that the row has nowhere left to take the squeeze
+    /// from and the buttons overlap.
+    in-out property <length> header-width: 120px;
     /// The switches and their gutters, and nothing spare: below this the row
     /// has nowhere left to take the squeeze from and the buttons overlap.
-    in property <length> min-header: 150px;
+    in property <length> min-header: 96px;
 
     /// Where the column was when the divider went down. A drag is one pointer,
     /// so one slot is enough.

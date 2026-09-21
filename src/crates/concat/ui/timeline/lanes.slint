@@ -463,8 +463,8 @@ component Clip inherits Rectangle {
         width: parent.width;
         height: parent.height;
         border-radius: Theme.r-sm;
-        border-width: root.item.selected ? 2px : 1px;
-        border-color: root.item.selected ? Theme.accent : root.mark;
+        border-width: root.item.selected || root.long-press ? 2px : 1px;
+        border-color: root.item.selected || root.long-press ? Theme.accent : root.mark;
     }
 
     // ── locked ───────────────────────────────────────────────────────────
@@ -490,9 +490,32 @@ component Clip inherits Rectangle {
     // local delta is measured against its own moving origin and cancels
     // itself out; the drag stalls after the first frame. Same reasoning, and
     // the same fix, as the workspace splitters.
+    // ponytail: long-press opens the clip menu where a right-click would
+    // — the one desktop affordance a touchscreen has no answer for. Held
+    // past 550ms without moving, the menu fires; a slop radius of 8px
+    // cancels the hold the moment the finger strays, and a release or a
+    // fired hold both reset it. All state sits on the component root so
+    // both the timer and the touch area can reach it.
+    property <length> hold-x;
+    property <length> hold-y;
+    property <bool> hold-live;
+    property <bool> long-press;
+    hold-timer := Timer {
+        interval: 550ms;
+        running: touch.pressed && root.hold-live && !root.long-press;
+        triggered => {
+            root.hold-live = false;
+            root.long-press = true;
+            root.context-requested();
+        }
+    }
+
     touch := TouchArea {
         enabled: !root.locked;
         mouse-cursor: root.edge-at >= 0 ? MouseCursor.ew-resize : MouseCursor.grab;
+
+        property <length> press-x;
+        property <length> press-y;
 
         pointer-event(event) => {
             // The right button opens the menu and does nothing else — it must
@@ -509,19 +532,34 @@ component Clip inherits Rectangle {
             }
             if (event.kind == PointerEventKind.down
                 && event.button == PointerEventButton.left) {
-                self.origin-x = self.absolute-position.x + self.mouse-x;
-                self.origin-y = self.absolute-position.y + self.mouse-y;
+                self.press-x = self.absolute-position.x + self.mouse-x;
+                self.press-y = self.absolute-position.y + self.mouse-y;
+                root.hold-x = self.press-x;
+                root.hold-y = self.press-y;
+                root.long-press = false;
+                root.hold-live = true;
+                self.origin-x = self.press-x;
+                self.origin-y = self.press-y;
                 root.pressed(event.modifiers.shift || event.modifiers.control
                     || event.modifiers.meta, root.edge-at);
             } else if (event.kind == PointerEventKind.up
                 || event.kind == PointerEventKind.cancel) {
                 // Only a release ends it. Slint delivers `move` here too, so a
                 // plain `else` would end the gesture the moment it began.
+                root.long-press = false;
+                root.hold-live = false;
                 root.released();
             }
         }
 
         moved => {
+            // A press that travels is a drag, not a hold: kill the timer the
+            // moment the finger strays past a slop radius.
+            if (root.hold-live
+                && ((self.absolute-position.x + self.mouse-x - root.hold-x).abs() > 8px
+                    || (self.absolute-position.y + self.mouse-y - root.hold-y).abs() > 8px)) {
+                root.hold-live = false;
+            }
             if (root.tool == TimelineTool.select) {
                 root.dragged(
                     (self.absolute-position.x + self.mouse-x - self.origin-x)
@@ -734,19 +772,30 @@ export component Lanes inherits Rectangle {
             property <length> from-y;
             property <length> to-x;
             property <length> to-y;
+            // ponytail: a press that ends up mostly horizontal is a pan of
+            // time, not a band — the empty lane is where a phone's swipe
+            // lands, and a swipe that draws a selection is a misfire.
+            property <length> press-x;
+            property <length> press-y;
+            property <bool> panning;
 
             pointer-event(event) => {
                 if (event.kind == PointerEventKind.down) {
                     root.floor-pressed();
                     self.additive = event.modifiers.shift;
+                    self.press-x = self.absolute-position.x + self.mouse-x;
+                    self.press-y = self.absolute-position.y + self.mouse-y;
                     self.from-x = self.mouse-x;
                     self.from-y = self.mouse-y;
                     self.to-x = self.mouse-x;
                     self.to-y = self.mouse-y;
                     self.drawing = true;
+                    self.panning = false;
                 } else if (event.kind == PointerEventKind.up
                     || event.kind == PointerEventKind.cancel) {
-                    if (self.drawing) {
+                    if (self.panning) {
+                        self.panning = false;
+                    } else if (self.drawing) {
                         self.drawing = false;
                         root.band-selected(
                             root.seconds-at(Math.min(self.from-x, self.to-x)),
@@ -761,6 +810,23 @@ export component Lanes inherits Rectangle {
             moved => {
                 self.to-x = self.mouse-x;
                 self.to-y = self.mouse-y;
+                // Declared horizontal past an 8px slop: the press becomes a
+                // pan, the band is abandoned (its rectangle only draws while
+                // `drawing`), and every later pixel pans time.
+                if (self.drawing && !self.panning
+                    && (self.absolute-position.x + self.mouse-x - self.press-x).abs() > 8px
+                    && (self.absolute-position.x + self.mouse-x - self.press-x).abs()
+                        > (self.absolute-position.y + self.mouse-y - self.press-y).abs()) {
+                    self.panning = true;
+                    self.drawing = false;
+                    self.to-x = self.from-x;
+                    self.to-y = self.from-y;
+                }
+                if (self.panning) {
+                    root.scrolled(Math.max(0, root.scroll-left
+                        - (self.absolute-position.x + self.mouse-x - self.press-x)
+                            / root.px-per-second));
+                }
             }
         }
 

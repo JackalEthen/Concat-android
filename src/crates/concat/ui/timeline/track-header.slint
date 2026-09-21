@@ -141,92 +141,95 @@ component Header inherits Rectangle {
     }
 
     row := TouchArea {
-        HorizontalLayout {
-            padding-left: 8px;
+        VerticalLayout {
+            padding-left: 6px;
             padding-right: 4px;
-            padding-top: 6px;
-            spacing: 1px;
-            // No `alignment: start` here. A start-aligned row gives every
-            // child its preferred width and stops stretching altogether — and
-            // the spacer's preferred width is nothing, so the two ends would
-            // collapse together. The switches are start-aligned on the
-            // *cross* axis individually, which is the part actually wanted.
+            padding-top: 3px;
+            padding-bottom: 3px;
+            spacing: 0px;
+            // ponytail: two rows of switches instead of one — a lane head
+            // that fits a narrow column. Row 1: size + lock. Row 2: show,
+            // mute, and the remove that used to own the trailing edge; it
+            // is hover-revealed as before, and keeps its own slot.
             //
-            // The lane's own switches - size, lock, visibility, mute - sit
-            // against the leading edge, and the one that takes the lane
-            // away sits alone against the trailing edge, with the row's
-            // give between them: a destructive button is kept apart from
-            // the ones pressed all day, the way a form keeps Delete away
-            // from Save. A narrow column takes the squeeze from the gap,
-            // not from either end.
+            // No `alignment: start` on the inner rows. A start-aligned row
+            // gives every child its preferred width and stops stretching
+            // altogether; the switches are start-aligned on the cross axis
+            // individually, which is the part actually wanted.
 
-            VerticalLayout {
-                alignment: start;
-                SizeMenu {
-                    current: root.track.size;
-                    picked(size) => { root.sized(size); }
+            HorizontalLayout {
+                spacing: 1px;
+
+                VerticalLayout {
+                    alignment: start;
+                    SizeMenu {
+                        current: root.track.size;
+                        picked(size) => { root.sized(size); }
+                    }
                 }
-            }
 
-            VerticalLayout {
-                alignment: start;
-                IconButton {
-                    glyph: root.track.locked ? Glyph.lock : Glyph.unlock;
-                    label: root.track.locked ? I18n.t("Unlock lane") : I18n.t("Lock lane");
-                    icon-size: 12px;
-                    checked: root.track.locked;
-                    clicked => {
-                        root.flag-changed(root.track.visible, root.track.muted,
-                            !root.track.locked);
+                VerticalLayout {
+                    alignment: start;
+                    IconButton {
+                        glyph: root.track.locked ? Glyph.lock : Glyph.unlock;
+                        label: root.track.locked ? I18n.t("Unlock lane") : I18n.t("Lock lane");
+                        icon-size: 12px;
+                        checked: root.track.locked;
+                        clicked => {
+                            root.flag-changed(root.track.visible, root.track.muted,
+                                !root.track.locked);
+                        }
                     }
                 }
             }
 
-            VerticalLayout {
-                alignment: start;
-                IconButton {
-                    // Checked when the lane is *off*: the button is lit to say
-                    // something is being withheld, which is the state worth
-                    // announcing.
-                    glyph: root.track.visible ? Glyph.eye : Glyph.eye-off;
-                    label: root.track.visible ? I18n.t("Hide lane") : I18n.t("Show lane");
-                    icon-size: 12px;
-                    checked: !root.track.visible;
-                    clicked => {
-                        root.flag-changed(!root.track.visible, root.track.muted,
-                            root.track.locked);
+            HorizontalLayout {
+                spacing: 1px;
+
+                VerticalLayout {
+                    alignment: start;
+                    IconButton {
+                        // Checked when the lane is *off*: the button is lit to say
+                        // something is being withheld, which is the state worth
+                        // announcing.
+                        glyph: root.track.visible ? Glyph.eye : Glyph.eye-off;
+                        label: root.track.visible ? I18n.t("Hide lane") : I18n.t("Show lane");
+                        icon-size: 12px;
+                        checked: !root.track.visible;
+                        clicked => {
+                            root.flag-changed(!root.track.visible, root.track.muted,
+                                root.track.locked);
+                        }
                     }
                 }
-            }
 
-            VerticalLayout {
-                alignment: start;
-                IconButton {
-                    glyph: root.track.muted ? Glyph.volume-off : Glyph.volume;
-                    label: root.track.muted ? I18n.t("Unmute lane") : I18n.t("Mute lane");
-                    icon-size: 12px;
-                    checked: root.track.muted;
-                    clicked => {
-                        root.flag-changed(root.track.visible, !root.track.muted,
-                            root.track.locked);
+                VerticalLayout {
+                    alignment: start;
+                    IconButton {
+                        glyph: root.track.muted ? Glyph.volume-off : Glyph.volume;
+                        label: root.track.muted ? I18n.t("Unmute lane") : I18n.t("Mute lane");
+                        icon-size: 12px;
+                        checked: root.track.muted;
+                        clicked => {
+                            root.flag-changed(root.track.visible, !root.track.muted,
+                                root.track.locked);
+                        }
                     }
                 }
-            }
 
-            Rectangle { horizontal-stretch: 1; }
-
-            // Revealed on hover, and never on the last lane standing. The
-            // slot is always there, so the switches do not slide when the
-            // cross appears.
-            VerticalLayout {
-                alignment: start;
-                width: 26px;
-                if root.removable && row.has-hover: IconButton {
-                    glyph: Glyph.close;
-                    label: I18n.t("Remove lane");
-                    icon-size: 11px;
-                    danger: true;
-                    clicked => { root.removed(); }
+                // Revealed on hover, and never on the last lane standing. The
+                // slot is always there, so the switches do not slide when the
+                // cross appears.
+                VerticalLayout {
+                    alignment: start;
+                    width: 26px;
+                    if root.removable && row.has-hover: IconButton {
+                        glyph: Glyph.close;
+                        label: I18n.t("Remove lane");
+                        icon-size: 11px;
+                        danger: true;
+                        clicked => { root.removed(); }
+                    }
                 }
             }
         }

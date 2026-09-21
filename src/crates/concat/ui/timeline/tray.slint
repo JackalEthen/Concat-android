@@ -93,161 +93,186 @@ export component TimelineTray inherits Rectangle {
         background: Theme.line;
     }
 
-    HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        padding-top: 7px;
-        padding-bottom: 7px;
-        spacing: 4px;
+    // ponytail: the tray scrolls instead of clipping — a phone's 380px
+    // cannot hold twenty-odd buttons, and a row you can drag beats a row
+    // that eats its right half.
+    property <length> tray-overflow: Math.max(0px, row.preferred-width - root.width);
+    property <length> tray-x;
 
-        IconButton {
-            glyph: Glyph.plus;
-            label: I18n.t("Add track");
-            icon-size: 14px;
-            clicked => { root.add-track(); }
-        }
+    Flickable {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        viewport-width: row.preferred-width;
+        viewport-height: parent.height;
+        interactive: false;
 
-        Divider { }
+        row := HorizontalLayout {
+            x: -root.tray-x;
+            padding-left: 8px;
+            padding-right: 8px;
+            padding-top: 7px;
+            padding-bottom: 7px;
+            spacing: 4px;
 
-        IconButton {
-            glyph: Glyph.undo;
-            label: I18n.t("Undo (⌘Z)");
-            icon-size: 16px;
-            enabled: root.can-undo;
-            clicked => { root.undo(); }
-        }
-        IconButton {
-            glyph: Glyph.redo;
-            label: I18n.t("Redo (⇧⌘Z)");
-            icon-size: 16px;
-            enabled: root.can-redo;
-            clicked => { root.redo(); }
-        }
+            drag := TouchArea {
+                // The scroll gesture lives here; buttons get their own
+                // presses, a drag that starts on one scrolls the row.
+                property <length> press-x;
+                pointer-event(event) => {
+                    if (event.kind == PointerEventKind.down) {
+                        self.press-x = self.absolute-position.x + self.mouse-x
+                            + root.tray-x;
+                    }
+                }
+                moved => {
+                    root.tray-x = Math.max(0px,
+                        Math.min(root.tray-overflow,
+                            self.press-x - self.absolute-position.x - self.mouse-x));
+                }
+                scroll-event(event) => {
+                    root.tray-x = Math.max(0px,
+                        Math.min(root.tray-overflow, root.tray-x - event.delta-x));
+                    return EventResult.accept;
+                }
+            }
 
-        Divider { }
+            IconButton {
+                glyph: Glyph.plus;
+                label: I18n.t("Add track");
+                icon-size: 14px;
+                clicked => { root.add-track(); }
+            }
 
-        // One way to cut: at the playhead. The razor that cut where you
-        // clicked is gone - two tools for one edit, and the playhead is
-        // already where you were looking.
-        IconButton {
-            glyph: Glyph.split;
-            label: I18n.t("Split at playhead (B, or ⌘B for every clip)");
-            icon-size: 16px;
-            clicked => { root.split(); }
-        }
-        IconButton {
-            glyph: Glyph.merge;
-            // The reason a blocked Merge is blocked rides on the button rather
-            // than being spelled out beside it. This tree has no tooltip yet,
-            // so `label` — the accessible name, and where a tooltip will read
-            // from — is the honest place to park it. A permanent caption in
-            // the tray would answer a question nobody had asked yet.
-            label: root.merge-blocked-because == "" ? "Merge selected"
-                : root.merge-blocked-because;
-            enabled: root.merge-blocked-because == "";
-            icon-size: 16px;
-            clicked => { root.merge(); }
-        }
-        IconButton {
-            glyph: Glyph.trash;
-            label: I18n.t("Delete selected");
-            danger: true;
-            icon-size: 16px;
-            enabled: root.selected-count > 0;
-            clicked => { root.delete-selected(); }
-        }
+            Divider { }
 
-        // The count of a multiple selection, in the accent so it reads as a
-        // fact about the selection rather than another control.
-        if root.selected-count > 1: Text {
-            width: 16px;
-            text: "\{root.selected-count}";
-            color: Theme.accent;
-            font-size: Theme.fs-sm;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
+            IconButton {
+                glyph: Glyph.undo;
+                label: I18n.t("Undo (⌘Z)");
+                icon-size: 16px;
+                enabled: root.can-undo;
+                clicked => { root.undo(); }
+            }
+            IconButton {
+                glyph: Glyph.redo;
+                label: I18n.t("Redo (⇧⌘Z)");
+                icon-size: 16px;
+                enabled: root.can-redo;
+                clicked => { root.redo(); }
+            }
 
-        Divider { }
+            Divider { }
 
-        IconButton {
-            glyph: Glyph.hand;
-            label: I18n.t("Pan tool");
-            icon-size: 16px;
-            checked: root.pan-mode;
-            clicked => { root.pan-changed(!root.pan-mode); }
-        }
+            // One way to cut: at the playhead. The razor that cut where you
+            // clicked is gone - two tools for one edit, and the playhead is
+            // already where you were looking.
+            IconButton {
+                glyph: Glyph.split;
+                label: I18n.t("Split at playhead (B, or ⌘B for every clip)");
+                icon-size: 16px;
+                clicked => { root.split(); }
+            }
+            IconButton {
+                glyph: Glyph.merge;
+                // The reason a blocked Merge is blocked rides on the button rather
+                // than being spelled out beside it. This tree has no tooltip yet,
+                // so `label` — the accessible name, and where a tooltip will read
+                // from — is the honest place to park it. A permanent caption in
+                // the tray would answer a question nobody had asked yet.
+                label: root.merge-blocked-because == "" ? "Merge selected"
+                    : root.merge-blocked-because;
+                enabled: root.merge-blocked-because == "";
+                icon-size: 16px;
+                clicked => { root.merge(); }
+            }
+            IconButton {
+                glyph: Glyph.trash;
+                label: I18n.t("Delete selected");
+                danger: true;
+                icon-size: 16px;
+                enabled: root.selected-count > 0;
+                clicked => { root.delete-selected(); }
+            }
 
-        Divider { }
+            // The count of a multiple selection, in the accent so it reads as a
+            // fact about the selection rather than another control.
+            if root.selected-count > 1: Text {
+                width: 16px;
+                text: "\{root.selected-count}";
+                color: Theme.accent;
+                font-size: Theme.fs-sm;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
 
-        IconButton {
-            glyph: Glyph.magnet;
-            label: I18n.t("Snap to edges");
-            icon-size: 16px;
-            checked: root.snap;
-            clicked => { root.snap-changed(!root.snap); }
-        }
-        // The magnetic timeline, beside the snap it is so often mistaken
-        // for: snap is where a drag lands, magnetic is that a delete or a
-        // trim leaves no hole. https://github.com/jub0t/Concat/issues/106
-        IconButton {
-            glyph: Glyph.fold;
-            label: I18n.t("Magnetic timeline: deleting and trimming close the gap");
-            icon-size: 16px;
-            checked: root.magnetic;
-            clicked => { root.magnetic-changed(!root.magnetic); }
-        }
+            Divider { }
 
-        Divider { }
+            IconButton {
+                glyph: Glyph.hand;
+                label: I18n.t("Pan tool");
+                icon-size: 16px;
+                checked: root.pan-mode;
+                clicked => { root.pan-changed(!root.pan-mode); }
+            }
 
-        IconButton {
-            glyph: Glyph.text-mark;
-            label: I18n.t("Generate Captions");
-            icon-size: 16px;
-            clicked => { root.captions(); }
-        }
-        IconButton {
-            glyph: Glyph.volume;
-            label: I18n.t("Text to Speech");
-            icon-size: 16px;
-            clicked => { root.speak(); }
-        }
+            Divider { }
 
-        Rectangle { horizontal-stretch: 1; }
+            IconButton {
+                glyph: Glyph.magnet;
+                label: I18n.t("Snap to edges");
+                icon-size: 16px;
+                checked: root.snap;
+                clicked => { root.snap-changed(!root.snap); }
+            }
+            // The magnetic timeline, beside the snap it is so often mistaken
+            // for: snap is where a drag lands, magnetic is that a delete or a
+            // trim leaves no hole. https://github.com/jub0t/Concat/issues/106
+            IconButton {
+                glyph: Glyph.fold;
+                label: I18n.t("Magnetic timeline: deleting and trimming close the gap");
+                icon-size: 16px;
+                checked: root.magnetic;
+                clicked => { root.magnetic-changed(!root.magnetic); }
+            }
 
-        // Fixed width, right-aligned: without it every control to its right
-        // shuffles sideways each time the frame digits change.
-        Text {
-            width: 92px;
-            text: root.readout;
-            color: Theme.fg-dim;
-            font-size: Theme.fs-sm;
-            letter-spacing: 0.24px;
-            horizontal-alignment: right;
-            vertical-alignment: center;
-        }
+            Divider { }
 
-        Divider { }
+            IconButton {
+                glyph: Glyph.text-mark;
+                label: I18n.t("Generate Captions");
+                icon-size: 16px;
+                clicked => { root.captions(); }
+            }
+            IconButton {
+                glyph: Glyph.volume;
+                label: I18n.t("Text to Speech");
+                icon-size: 16px;
+                clicked => { root.speak(); }
+            }
 
-        IconButton {
-            glyph: Glyph.fit;
-            label: I18n.t("Zoom to fit");
-            icon-size: 15px;
-            clicked => { root.fit(); }
-        }
-        IconButton {
-            glyph: Glyph.minus;
-            label: I18n.t("Zoom out");
-            icon-size: 14px;
-            // Above 1 is out: the factor multiplies seconds-per-pixel, so a
-            // bigger number is more seconds in the same pixel.
-            clicked => { root.zoom(1.4); }
-        }
-        IconButton {
-            glyph: Glyph.plus;
-            label: I18n.t("Zoom in");
-            icon-size: 14px;
-            clicked => { root.zoom(1 / 1.4); }
+            Divider { }
+
+            IconButton {
+                glyph: Glyph.fit;
+                label: I18n.t("Zoom to fit");
+                icon-size: 15px;
+                clicked => { root.fit(); }
+            }
+            IconButton {
+                glyph: Glyph.minus;
+                label: I18n.t("Zoom out");
+                icon-size: 14px;
+                // Above 1 is out: the factor multiplies seconds-per-pixel, so a
+                // bigger number is more seconds in the same pixel.
+                clicked => { root.zoom(1.4); }
+            }
+            IconButton {
+                glyph: Glyph.plus;
+                label: I18n.t("Zoom in");
+                icon-size: 14px;
+                clicked => { root.zoom(1 / 1.4); }
+            }
         }
     }
 }

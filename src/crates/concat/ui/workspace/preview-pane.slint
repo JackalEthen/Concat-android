@@ -928,8 +928,10 @@ export component PreviewPane inherits Rectangle {
         }
 
         // ── the transport ────────────────────────────────────────────────
+        // ponytail: two rows on every window — the timecode centred above,
+        // the controls below. One row tried to hold them and lost.
         Rectangle {
-            height: 46px;
+            height: 78px;
             background: Theme.panel;
 
             Rectangle {
@@ -940,52 +942,65 @@ export component PreviewPane inherits Rectangle {
                 background: Theme.line;
             }
 
-            HorizontalLayout {
+            VerticalLayout {
                 padding-left: 10px;
                 padding-right: 10px;
-                spacing: 12px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                spacing: 2px;
 
-                // Leading: where the playhead is, and how far it has to go.
+                // Row 1: where the playhead is, centred.
                 HorizontalLayout {
-                    horizontal-stretch: 1;
-                    spacing: 8px;
-                    alignment: start;
+                    HorizontalLayout {
+                        horizontal-stretch: 1;
+                        alignment: end;
+                        spacing: 8px;
 
-                    VerticalLayout {
-                        alignment: center;
-                        NumberField {
-                            width: 116px;
-                            value <=> root.shown-frames;
-                            minimum: 0;
-                            maximum: root.playhead-free ? 1000000000 : root.total-frames;
-                            step: 1;
-                            // Scrubbing a timecode should walk frames at the
-                            // speed a hand expects, not fly a hundred at once.
-                            px-per-step: 3px;
-                            format(v) => {
-                                return Fmt.frames-timecode(v / root.frame-rate,
-                                    root.frame-rate);
+                        VerticalLayout {
+                            alignment: center;
+                            NumberField {
+                                width: 116px;
+                                value <=> root.shown-frames;
+                                minimum: 0;
+                                maximum: root.playhead-free ? 1000000000 : root.total-frames;
+                                step: 1;
+                                // Scrubbing a timecode should walk frames at the
+                                // speed a hand expects, not fly a hundred at once.
+                                px-per-step: 3px;
+                                format(v) => {
+                                    return Fmt.frames-timecode(v / root.frame-rate,
+                                        root.frame-rate);
+                                }
+                                parse(text) => {
+                                    return Fmt.parse-frames(text, root.frame-rate);
+                                }
+                                changed(v) => { root.seek(v / root.frame-rate); }
                             }
-                            parse(text) => {
-                                return Fmt.parse-frames(text, root.frame-rate);
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "/ " + Fmt.frames-timecode(root.duration, root.frame-rate);
+                                color: Theme.fg-dim;
+                                font-family: Theme.font-technical;
+                                font-size: Theme.fs;
+                                vertical-alignment: center;
                             }
-                            changed(v) => { root.seek(v / root.frame-rate); }
                         }
                     }
 
-                    Text {
-                        text: "/ " + Fmt.frames-timecode(root.duration, root.frame-rate);
-                        color: Theme.fg-dim;
-                        font-family: Theme.font-technical;
-                        font-size: Theme.fs;
-                        vertical-alignment: center;
+                    // Balance the centring: the trailing readout is wider
+                    // than the leading number field alone.
+                    Rectangle {
+                        width: 40px;
+                        horizontal-stretch: 1;
                     }
                 }
 
-                // Centre: the transport itself.
+                // Row 2: the transport and the view controls together.
                 HorizontalLayout {
-                    horizontal-stretch: 0;
-                    spacing: 2px;
+                    spacing: 4px;
                     alignment: center;
 
                     IconButton {
@@ -1023,13 +1038,10 @@ export component PreviewPane inherits Rectangle {
                         enabled: !root.at-end;
                         clicked => { root.seek(root.duration); }
                     }
-                }
 
-                // Trailing: what the output is and how close we are looking.
-                HorizontalLayout {
-                    horizontal-stretch: 1;
-                    spacing: 6px;
-                    alignment: end;
+                    // A breath between the transport and the view controls —
+                    // close enough to read as one row, far enough not to merge.
+                    Rectangle { width: 8px; }
 
                     VerticalLayout {
                         alignment: center;
@@ -1057,9 +1069,6 @@ export component PreviewPane inherits Rectangle {
                         }
                     }
 
-                    // The one control the view needs: the way back. The
-                    // zoom itself is the wheel's, and a readout of it was
-                    // width spent on a number nobody steers by.
                     VerticalLayout {
                         alignment: center;
                         IconButton {
