@@ -32,6 +32,8 @@ import { Editor } from "editor.slint";
 import { PaneKind } from "workspace/pane-switcher.slint";
 import { RecentProjectData, StartData, StartScreen } from "start.slint";
 import { TitleBar } from "title-bar.slint";
+import { PanelDrawer } from "drawer.slint";
+import { PaneKind } from "workspace/pane-switcher.slint";
 import {
     AppliedEntryData, AppliedParamData, CatalogueEntryData, Library, LibraryViewData,
 } from "inspector/clip-inspector.slint";
@@ -162,6 +164,11 @@ export component App inherits Window {
     /// from the window's own width, so the start screen and the dialogs
     /// follow it without a round trip through Rust.
     in-out property <bool> compact: root.width < 860px;
+
+    // ── the compact panel drawer ──
+    // ponytail: opened by the logo, closed by a tap outside or its own ×.
+    // Purely a view state; the panels it manages live in Rust's park.
+    in-out property <bool> drawer-open: false;
     /// Read back from the platform on every resize, so the strip can show
     /// restore rather than maximise - whichever route maximised it.
     in-out property <bool> window-maximized;
@@ -439,6 +446,7 @@ export component App inherits Window {
 
                 own-buttons: root.own-window-buttons;
                 maximized: root.window-maximized;
+                logo-pressed => { root.drawer-open = !root.drawer-open; }
                 begin-drag => { root.titlebar-begin-drag(); }
                 toggle-maximize => { root.titlebar-toggle-maximize(); }
                 minimize => { root.titlebar-minimize(); }
@@ -612,6 +620,32 @@ export component App inherits Window {
         y: 0;
         width: root.width;
         height: root.height;
+    }
+
+    // ── the compact panel drawer ──
+    // Above the workspace, under the dialogs; a tap on the scrim closes it.
+    // Its box starts under the system's own bars, so a gesture navigation
+    // bar and a status bar stay visible and untouchable through it.
+    PanelDrawer {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        open: root.drawer-open && root.compact;
+        window-width: root.width;
+        window-height: root.height;
+        safe-left: root.safe-area-insets.left;
+        safe-top: root.safe-area-insets.top;
+        safe-bottom: root.safe-area-insets.bottom;
+        parked: Editor.parked;
+
+        closed => { root.drawer-open = false; }
+        summon(index, slot) => {
+            root.drawer-open = false;
+            Editor.drawer-summon(index, slot);
+        }
+        close-parked(index) => { Editor.drawer-close(index); }
+        add(kind) => { Editor.dock-add(kind); }
     }
 
     // Above the dialogs as well as the workspace. A PopupWindow is its own

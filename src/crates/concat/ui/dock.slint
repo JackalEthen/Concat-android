@@ -20,6 +20,15 @@ import { PaneKind } from "workspace/pane-switcher.slint";
 // size back: the minimum a pane may be squeezed to is a number of pixels, and
 // a fraction cannot be clamped against one.
 
+/// One parked panel in the compact drawer: what it is and the name it
+/// goes by. `index` is which park row it sits in, so the row and the
+/// callback agree on identity.
+export struct ParkedPanel {
+    kind: PaneKind,
+    name: string,
+    index: int,
+}
+
 /// One view, placed. `index` is its position in a walk of the tree, and it is
 /// what a drop names — the payload a panel carries says which seat it came
 /// from, and the seat it lands on knows its own.

@@ -133,6 +133,8 @@ export component TitleBar inherits Rectangle {
     callback toggle-maximize();
     callback minimize();
     callback close();
+    /// The logo was pressed: on a compact strip, the panel drawer's handle.
+    callback logo-pressed();
     /// A menu was asked for: which one, and where its label sits in the strip,
     /// so the sheet can hang off it. `-2` is the compact hamburger: Rust opens
     /// the File menu's list of all three strips in its place.
@@ -181,9 +183,19 @@ export component TitleBar inherits Rectangle {
         padding-right: root.own-buttons ? 0px : 8px;
         spacing: 2px;
 
-        // mark + wordmark
-        VerticalLayout {
-            alignment: center;
+        // mark + wordmark. On a compact strip the mark is the drawer's
+        // handle: tap it for the panel menu. The strip's own drag TouchArea
+        // sits under it, so a drag from the mark still moves the window.
+        logo-rect := Rectangle {
+            width: 16px;
+            if root.compact: TouchArea {
+                // A 32px-wide tap target that does not move the neighbours:
+                // 8px of reach each side, drawn over the strip's spacing.
+                x: -8px;
+                width: parent.width + 16px;
+                mouse-cursor: pointer;
+                clicked => { root.logo-pressed(); }
+            }
             Image {
                 width: 16px;
                 height: 16px;

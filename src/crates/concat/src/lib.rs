@@ -150,6 +150,7 @@ pub fn run() -> Result<(), slint::PlatformError> {
     {
         let editor = app.global::<Editor>();
         let models = &shell.models;
+        editor.set_parked(ModelRc::from(models.parked.clone()));
         editor.set_timeline_tabs(ModelRc::from(models.tabs.clone()));
         editor.set_tracks(ModelRc::from(models.tracks.clone()));
         editor.set_clips(ModelRc::from(models.clips.clone()));
@@ -415,30 +416,53 @@ pub fn run() -> Result<(), slint::PlatformError> {
         state.dock.remove_leaf(&from_path);
     }));
     editor.on_dock_add(on_dock!(|state, kind: PaneKind| {
-        let seats = state.dock_layout().seats;
-        let Some(biggest) = seats
-            .iter()
-            .max_by(|a, b| (a.width * a.height).total_cmp(&(b.width * b.height)))
-        else {
-            return;
-        };
-        let across = biggest.width >= SEAT_MIN_W * 2.0;
-        let down = biggest.height >= SEAT_MIN_H * 2.0;
-        let side = if biggest.width >= biggest.height && (across || !down) {
-            DockSide::Right
+        // ponytail: compact never splits a seat — the edit area holds at
+        // most two, and a new panel parks instead of squeezing in. The wide
+        // dock keeps its tiling. No early return anywhere: the macro
+        // publishes after this body, and a return would skip it — the dock
+        // would change with the window never told.
+        if state.compact {
+            state.compact_add(kind);
         } else {
-            DockSide::Bottom
-        };
-        let Some(path) = state.dock.leaf_path(biggest.index.max(0) as usize) else {
-            return;
-        };
-        state.dock.split_leaf(&path, kind, side);
+            let seats = state.dock_layout().seats;
+            if let Some(biggest) = seats
+                .iter()
+                .max_by(|a, b| (a.width * a.height).total_cmp(&(b.width * b.height)))
+            {
+                let across = biggest.width >= SEAT_MIN_W * 2.0;
+                let down = biggest.height >= SEAT_MIN_H * 2.0;
+                let side = if biggest.width >= biggest.height && (across || !down) {
+                    DockSide::Right
+                } else {
+                    DockSide::Bottom
+                };
+                if let Some(path) = state.dock.leaf_path(biggest.index.max(0) as usize) {
+                    state.dock.split_leaf(&path, kind, side);
+                }
+            }
+        }
     }));
     editor.on_dock_remove(on_dock!(|state, seat: i32| {
-        let Some(path) = state.dock.leaf_path(seat.max(0) as usize) else {
-            return;
-        };
-        state.dock.remove_leaf(&path);
+        // The compact edit area never goes empty: with two seats the one
+        // closing is removed and the survivor fills the area, and the last
+        // seat refuses to close. The wide dock removes freely as before.
+        // No early return: it would skip the macro's publish and the
+        // window would never learn the dock changed.
+        if state.compact {
+            state.compact_close_seat(seat.max(0) as usize);
+        } else if let Some(path) = state.dock.leaf_path(seat.max(0) as usize) {
+            state.dock.remove_leaf(&path);
+        }
+    }));
+    // ── the compact drawer ──
+    editor.on_drawer_summon(on_dock!(|state, index: i32, slot: i32| {
+        state.compact_swap(index.max(0) as usize, slot.max(0) as usize);
+    }));
+    editor.on_drawer_close(on_dock!(|state, index: i32| {
+        state.compact_close_parked(index.max(0) as usize);
+    }));
+    editor.on_close_seat(on_dock!(|state, seat: i32| {
+        state.compact_close_seat(seat.max(0) as usize);
     }));
     editor.on_divider_pressed(on_dock!(|state, index: i32| {
         let index = index.max(0) as usize;

@@ -715,5 +715,16 @@
   "What a connection must present before its first call. Left empty, the server makes one up each time it starts and shows it here.": "Что соединение должно предъявить перед первым вызовом. Если оставить пустым, сервер сам придумает его при каждом запуске и покажет здесь.",
   "Decode on the hardware": "Decode on the hardware",
   "Decoding": "Decoding",
-  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before."
+  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.",
+  "Panel menu": "Меню панелей",
+  "Close the panel menu": "Закрыть меню панелей",
+  "Parked panels": "Отложенные панели",
+  "No parked panels. Add one with + in the title bar.": "Нет отложенных панелей. Добавьте через + в строке заголовка.",
+  "Show in the edit area": "Показать в области монтажа",
+  "Close this panel": "Закрыть эту панель",
+  "Put in the upper slot": "Поместить в верхний слот",
+  "Put in the lower slot": "Поместить в нижний слот",
+  "In the edit area": "В области монтажа",
+  "Upper": "Верх",
+  "Lower": "Низ"
 }

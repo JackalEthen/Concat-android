@@ -6,7 +6,7 @@ import {
     AppliedEntryData, AppliedParamData, CatalogueEntryData,
 } from "inspector/clip-inspector.slint";
 import { MediaFilter, MediaItemData, TextPresetData } from "workspace/media-pane.slint";
-import { DockDivider, DockSide, SeatBox } from "dock.slint";
+import { DockDivider, DockSide, ParkedPanel, SeatBox } from "dock.slint";
 import { PaneKind } from "workspace/pane-switcher.slint";
 import { MenuItemData } from "primitives/context-menu.slint";
 import {
@@ -44,6 +44,18 @@ export global Editor {
     /// because the minimum a pane may be squeezed to is a number of pixels,
     /// and it cannot know the window's size any other way.
     callback workspace-resized(width: length, height: length);
+
+    // ── the compact drawer ──
+    // ponytail: panels parked out of the edit area, and the four verbs the
+    // drawer speaks. The list is the park in order; summon swaps a parked
+    // panel into an edit-area slot (the displaced one parks); close destroys
+    // a parked panel; add parks a new one (or fills a free seat); close-seat
+    // closes an edit-area seat, refusing when it is the last.
+    in-out property <[ParkedPanel]> parked;
+    callback drawer-summon(index: int, slot: int);
+    callback drawer-close(index: int);
+    callback close-seat(seat: int);
+
 
     /// A seat's dropdown was used: show this view in this seat, and leave
     /// every other seat alone.

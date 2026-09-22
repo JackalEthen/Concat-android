@@ -44,7 +44,8 @@ use concat_project::{Command, why_not_merge};
 use slint::{Model, SharedString, VecModel};
 
 use crate::dock::{
-    Dock, DockLayout, SEAT_GAP, default_dock, lay_out, nearest_row, row_at, row_top,
+    Dock, DockLayout, SEAT_GAP, SEAT_MIN_H, SEAT_MIN_W, default_dock, lay_out, nearest_row,
+    row_at, row_top,
 };
 use crate::format::{
     WAVE_BAR, WAVE_PITCH, colour_of, frames_timecode, hex_of, hex_rgba, hex_with_alpha,
@@ -407,6 +408,7 @@ pub struct DropPlan {
 /// every instance behind it - mid-gesture, that includes the TouchArea
 /// holding the pointer.
 pub struct Models {
+    pub parked: Rc<VecModel<ParkedPanel>>,
     pub tabs: Rc<VecModel<TimelineTabData>>,
     pub tracks: Rc<VecModel<TrackData>>,
     pub clips: Rc<VecModel<ClipData>>,
@@ -453,6 +455,7 @@ pub struct Models {
 impl Models {
     pub fn new() -> Self {
         Self {
+            parked: Rc::new(VecModel::default()),
             tabs: Rc::new(VecModel::default()),
             tracks: Rc::new(VecModel::default()),
             clips: Rc::new(VecModel::default()),
@@ -585,6 +588,10 @@ pub struct Studio {
     pub dock_aside: Dock,
     /// Whether `dock` is the compact one.
     pub compact: bool,
+    /// ponytail: panels parked out of the compact edit area. A phone shows
+    /// one or two seats; everything else lives here, whole, until summoned
+    /// or closed. Names follow the kind, numbered when repeated.
+    pub parked: Vec<(PaneKind, String)>,
     pub workspace: (f32, f32),
     pub divider_press: Option<(usize, f32, f32)>,
     pub gesture: Gesture,
@@ -1231,6 +1238,7 @@ impl Studio {
             project_name: "Untitled project".into(),
             dock: default_dock(),
             dock_aside: crate::dock::compact_dock(),
+            parked: Vec::new(),
             compact: false,
             workspace: (0.0, 0.0),
             divider_press: None,
@@ -4928,15 +4936,225 @@ impl Studio {
         let out = self.dock_layout();
         sync(&models.seats, out.seats);
         sync(&models.dividers, out.dividers);
+        // The drawer's list, republished with every dock change so a summon
+        // or a close is on screen the moment the layout settles.
+        sync(
+            &models.parked,
+            self.parked
+                .iter()
+                .enumerate()
+                .map(|(index, (kind, name))| ParkedPanel {
+                    kind: *kind,
+                    name: name.as_str().into(),
+                    index: index as i32,
+                })
+                .collect(),
+        );
     }
 
     /// Shows the compact dock, or the wide one, keeping whichever is put
-    /// away whole; see `COMPACT_WIDTH`.
-    pub fn set_compact(&mut self, compact: bool) {
-        if compact != self.compact {
+    /// away whole; see `COMPACT_WIDTH`. Crossing into compact parks the
+    /// wide dock's spare leaves — a phone shows one or two seats — and
+    /// crossing back restores them.
+    pub fn set_compact(&mut self, compact: bool) {        if compact != self.compact {
+            if compact {
+                self.park_spare_leaves();
+            }
             std::mem::swap(&mut self.dock, &mut self.dock_aside);
             self.compact = compact;
+            if !compact && !self.parked.is_empty() {
+                self.restore_parked();
+            }
         }
+    }
+
+    /// ponytail: trims the edit area to two leaves by rebuilding it — the
+    /// last two leaves in draw order stay, as the compact two-row split;
+    /// everything before them parks. A rebuild cannot loop the way repeated
+    /// leaf removal could.
+    fn park_spare_leaves(&mut self) {
+        fn leaves(node: &Dock, out: &mut Vec<PaneKind>) {
+            match node {
+                Dock::Leaf(kind) => out.push(*kind),
+                Dock::Split { first, second, .. } => {
+                    leaves(first, out);
+                    leaves(second, out);
+                }
+            }
+        }
+        let mut all = Vec::new();
+        leaves(&self.dock, &mut all);
+        while all.len() > 2 {
+            let kind = all.remove(0);
+            self.parked.push((kind, Self::park_name(kind, &self.parked)));
+        }
+        // all now holds one or two kinds; rebuild the compact tree.
+        let mut rest = all.into_iter();
+        let Some(first) = rest.next() else {
+            return;
+        };
+        let Some(second) = rest.next() else {
+            self.dock = Dock::Leaf(first);
+            return;
+        };
+        self.dock = Dock::Split {
+            columns: false,
+            ratio: 0.5,
+            first: Dock::leaf(first),
+            second: Dock::leaf(second),
+        };
+    }
+
+    /// Brings the parked panels back into the wide dock when the window
+    /// widens: each is added the way the add-panel button would have.
+    fn restore_parked(&mut self) {
+        let parked = std::mem::take(&mut self.parked);
+        for (kind, _name) in parked {
+            let seats = self.dock_layout().seats;
+            let Some(biggest) = seats
+                .iter()
+                .max_by(|a, b| (a.width * a.height).total_cmp(&(b.width * b.height)))
+            else {
+                self.parked.push((kind, Self::park_name(kind, &self.parked)));
+                continue;
+            };
+            let across = biggest.width >= SEAT_MIN_W * 2.0;
+            let down = biggest.height >= SEAT_MIN_H * 2.0;
+            let side = if biggest.width >= biggest.height && (across || !down) {
+                DockSide::Right
+            } else {
+                DockSide::Bottom
+            };
+            let Some(path) = self.dock.leaf_path(biggest.index.max(0) as usize) else {
+                self.parked.push((kind, Self::park_name(kind, &self.parked)));
+                continue;
+            };
+            self.dock.split_leaf(&path, kind, side);
+        }
+    }
+
+    fn extract_kind(node: &Dock) -> PaneKind {
+        match node {
+            Dock::Leaf(kind) => *kind,
+            Dock::Split { first, .. } => Self::extract_kind(first),
+        }
+    }
+
+    /// The name a parked panel goes by: the kind's label, numbered when a
+    /// second of the same kind is already parked.
+    fn park_name(kind: PaneKind, parked: &[(PaneKind, String)]) -> String {
+        let base = match kind {
+            PaneKind::Media => crate::i18n::t("Library"),
+            PaneKind::Preview => crate::i18n::t("Preview"),
+            PaneKind::Inspector => crate::i18n::t("Inspector"),
+            PaneKind::Timeline => crate::i18n::t("Timeline"),
+        };
+        let same = parked.iter().filter(|(k, _)| *k == kind).count();
+        if same == 0 {
+            base.to_string()
+        } else {
+            format!("{base} {}", same + 1)
+        }
+    }
+
+    /// Adds a panel in compact mode: into the edit area while it has a free
+    /// seat, into the park once both are taken.
+    pub fn compact_add(&mut self, kind: PaneKind) {
+        fn count_leaves(node: &Dock, out: &mut usize) {
+            match node {
+                Dock::Leaf(_) => *out += 1,
+                Dock::Split { first, second, .. } => {
+                    count_leaves(first, out);
+                    count_leaves(second, out);
+                }
+            }
+        }
+        let mut leaves = 0;
+        count_leaves(&self.dock, &mut leaves);
+        if leaves < 2 {
+            // The single leaf gains a sibling below; the split's two leaves
+            // never leave one seat empty.
+            match &mut self.dock {
+                Dock::Leaf(_) => {
+                    let existing = std::mem::replace(&mut self.dock, Dock::Leaf(kind));
+                    self.dock = Dock::Split {
+                        columns: false,
+                        ratio: 0.5,
+                        first: Box::new(existing),
+                        second: Dock::leaf(kind),
+                    };
+                    return;
+                }
+                _ => {}
+            }
+        }
+        self.parked.push((kind, Self::park_name(kind, &self.parked)));
+    }
+
+    /// Swaps a parked panel into the named compact slot — 0 the upper leaf,
+    /// 1 the lower — the seat it replaces going into the park in its place.
+    pub fn compact_swap(&mut self, park_index: usize, slot: usize) {
+        let Some(kind) = self.parked.get(park_index).map(|(k, _)| *k) else {
+            return;
+        };
+        // One seat: it becomes the lower of a split, the parked panel takes
+        // the upper.
+        if matches!(self.dock, Dock::Leaf(_)) {
+            let displaced = Self::extract_kind(&self.dock);
+            let existing = std::mem::replace(&mut self.dock, Dock::Leaf(kind));
+            self.dock = Dock::Split {
+                columns: false,
+                ratio: 0.5,
+                first: Dock::leaf(kind),
+                second: Box::new(existing),
+            };
+            self.parked.remove(park_index);
+            self.parked.push((displaced, Self::park_name(displaced, &self.parked)));
+            return;
+        }
+        let Some(leaf_path) = self.dock.leaf_path(slot) else {
+            return;
+        };
+        let existing = match self.dock.at_mut(&leaf_path) {
+            Dock::Leaf(held) => *held,
+            _ => return,
+        };
+        if let Dock::Leaf(held) = self.dock.at_mut(&leaf_path) {
+            *held = kind;
+        }
+        self.parked.remove(park_index);
+        self.parked.push((existing, Self::park_name(existing, &self.parked)));
+    }
+
+    /// Closes a parked panel for good: off the list, gone.
+    pub fn compact_close_parked(&mut self, park_index: usize) {
+        if park_index < self.parked.len() {
+            self.parked.remove(park_index);
+        }
+    }
+
+    /// Closes a compact edit-area seat. One seat always survives: with two,
+    /// the one closing goes away and the survivor fills the area; with one,
+    /// the close is refused — the edit area cannot go empty.
+    pub fn compact_close_seat(&mut self, seat: usize) {
+        fn count_leaves(node: &Dock, out: &mut usize) {
+            match node {
+                Dock::Leaf(_) => *out += 1,
+                Dock::Split { first, second, .. } => {
+                    count_leaves(first, out);
+                    count_leaves(second, out);
+                }
+            }
+        }
+        let mut leaves = 0;
+        count_leaves(&self.dock, &mut leaves);
+        if leaves <= 1 {
+            return;
+        }
+        let Some(path) = self.dock.leaf_path(seat) else {
+            return;
+        };
+        self.dock.remove_leaf(&path);
     }
 
     pub fn dock_layout(&self) -> DockLayout {

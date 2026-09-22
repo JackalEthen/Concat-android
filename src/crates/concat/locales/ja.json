@@ -715,5 +715,16 @@
   "What a connection must present before its first call. Left empty, the server makes one up each time it starts and shows it here.": "接続が最初の呼び出しの前に提示するもの。空のままにすると、サーバーは起動のたびに自分で作り、ここに表示します。",
   "Decode on the hardware": "Decode on the hardware",
   "Decoding": "Decoding",
-  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before."
+  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.",
+  "Panel menu": "パネルメニュー",
+  "Close the panel menu": "パネルメニューを閉じる",
+  "Parked panels": "退避パネル",
+  "No parked panels. Add one with + in the title bar.": "退避パネルはありません。タイトルバーの＋で追加してください。",
+  "Show in the edit area": "編集エリアに表示",
+  "Close this panel": "このパネルを閉じる",
+  "Put in the upper slot": "上のスロットに置く",
+  "Put in the lower slot": "下のスロットに置く",
+  "In the edit area": "編集エリアの内容",
+  "Upper": "上",
+  "Lower": "下"
 }

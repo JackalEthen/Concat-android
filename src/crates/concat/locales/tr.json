@@ -715,5 +715,16 @@
   "What a connection must present before its first call. Left empty, the server makes one up each time it starts and shows it here.": "Bir bağlantının ilk çağrısından önce sunması gereken şey. Boş bırakılırsa sunucu her başlatıldığında bir tane uydurur ve burada gösterir.",
   "Decode on the hardware": "Decode on the hardware",
   "Decoding": "Decoding",
-  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before."
+  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.",
+  "Panel menu": "Panel menüsü",
+  "Close the panel menu": "Panel menüsünü kapat",
+  "Parked panels": "Bekleyen paneller",
+  "No parked panels. Add one with + in the title bar.": "Bekleyen panel yok. Başlık çubuğundaki + ile ekleyin.",
+  "Show in the edit area": "Düzenleme alanında göster",
+  "Close this panel": "Bu paneli kapat",
+  "Put in the upper slot": "Üst yuvaya koy",
+  "Put in the lower slot": "Alt yuvaya koy",
+  "In the edit area": "Düzenleme alanında",
+  "Upper": "Üst",
+  "Lower": "Alt"
 }

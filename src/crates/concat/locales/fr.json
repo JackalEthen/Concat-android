@@ -715,5 +715,16 @@
   "What a connection must present before its first call. Left empty, the server makes one up each time it starts and shows it here.": "Ce qu'une connexion doit présenter avant son premier appel. Laissé vide, le serveur en invente un à chaque démarrage et l'affiche ici.",
   "Decode on the hardware": "Decode on the hardware",
   "Decoding": "Decoding",
-  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before."
+  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.",
+  "Panel menu": "Menu des panneaux",
+  "Close the panel menu": "Fermer le menu des panneaux",
+  "Parked panels": "Panneaux rangés",
+  "No parked panels. Add one with + in the title bar.": "Aucun panneau rangé. Ajoutez-en un avec + dans la barre de titre.",
+  "Show in the edit area": "Afficher dans la zone d'édition",
+  "Close this panel": "Fermer ce panneau",
+  "Put in the upper slot": "Mettre dans l'emplacement supérieur",
+  "Put in the lower slot": "Mettre dans l'emplacement inférieur",
+  "In the edit area": "Dans la zone d'édition",
+  "Upper": "Haut",
+  "Lower": "Bas"
 }

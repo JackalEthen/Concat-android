@@ -1,0 +1,205 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 Jareer and Concat contributors
+
+import { I18n } from "i18n.slint";
+import { Theme } from "theme/theme.slint";
+import { Glyph, Icon } from "icons.slint";
+import { IconButton } from "primitives/panel.slint";
+import { ParkedPanel } from "dock.slint";
+import { Panes, PaneKind } from "workspace/pane-switcher.slint";
+import { Editor } from "editor.slint";
+
+// The compact panel drawer: where the edit area's spare panels live.
+//
+// ponytail: a phone shows one or two panels; everything else parks here.
+// The drawer hangs from the left, starts under the system's own bars
+// (safe-area-insets — the same numbers the window itself pads by), and
+// closes on a tap outside. Each parked row carries its own three buttons:
+// up takes the upper seat, down the lower, the cross destroys it. No row
+// tap, no pop-up menu — the buttons are the whole interface, and nothing
+// overlays anything.
+
+export component PanelDrawer inherits Rectangle {
+    in property <bool> open;
+    /// The window's own box: the drawer measures its inset against it.
+    in property <length> window-width;
+    in property <length> window-height;
+    in property <length> safe-left;
+    in property <length> safe-top;
+    in property <length> safe-bottom;
+    /// The panels parked out of the edit area, in park order.
+    in property <[ParkedPanel]> parked;
+
+    callback summon(index: int, slot: int);
+    callback close-parked(index: int);
+    callback add(kind: PaneKind);
+    callback closed();
+
+    visible: root.open;
+
+    // The scrim, before the surface: a tap on it closes.
+    TouchArea {
+        clicked => { root.closed(); }
+    }
+
+    surface := Rectangle {
+        x: 0;
+        y: root.safe-top;
+        width: 300px;
+        height: root.window-height - root.safe-top - root.safe-bottom;
+        background: Theme.panel;
+        border-width: 1px;
+        border-color: Theme.line-strong;
+        border-top-right-radius: Theme.r-lg;
+        border-bottom-right-radius: Theme.r-lg;
+        clip: true;
+
+        TouchArea {
+            // Swallows presses so they do not fall through to the scrim.
+        }
+
+        VerticalLayout {
+            padding: 8px;
+            spacing: 4px;
+
+            // ── the header ──
+            HorizontalLayout {
+                height: 36px;
+                spacing: 8px;
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: I18n.t("Panel menu");
+                        color: Theme.fg;
+                        font-size: Theme.fs-lg;
+                        font-weight: Theme.weight-title;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Rectangle { horizontal-stretch: 1; }
+
+                VerticalLayout {
+                    alignment: center;
+                    IconButton {
+                        glyph: Glyph.close;
+                        label: I18n.t("Close the panel menu");
+                        clicked => { root.closed(); }
+                    }
+                }
+            }
+
+            // ── the parked panels ──
+            Text {
+                height: 20px;
+                text: I18n.t("Parked panels");
+                color: Theme.fg-dim;
+                font-size: Theme.fs-sm;
+                letter-spacing: 0.6px;
+                vertical-alignment: center;
+            }
+
+            if root.parked.length == 0: Text {
+                height: 32px;
+                text: I18n.t("No parked panels. Add one with + in the title bar.");
+                color: Theme.fg-dim;
+                font-size: Theme.fs;
+                vertical-alignment: center;
+                wrap: word-wrap;
+            }
+
+            for panel in root.parked: Rectangle {
+                height: 44px;
+                border-radius: Theme.r-sm;
+                background: Colors.transparent;
+
+                HorizontalLayout {
+                    padding-left: 8px;
+                    padding-right: 4px;
+                    spacing: 4px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        width: 30px;
+                        Icon {
+                            glyph: Panes.glyph(panel.kind);
+                            size: 14px;
+                            tint: Theme.fg-muted;
+                        }
+                    }
+
+                    Text {
+                        horizontal-stretch: 1;
+                        text: panel.name;
+                        color: Theme.fg;
+                        font-size: Theme.fs;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        IconButton {
+                            glyph: Glyph.chevron-up;
+                            label: I18n.t("Put in the upper slot");
+                            clicked => { root.summon(panel.index, 0); }
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        IconButton {
+                            glyph: Glyph.chevron-down;
+                            label: I18n.t("Put in the lower slot");
+                            clicked => { root.summon(panel.index, 1); }
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        IconButton {
+                            glyph: Glyph.trash;
+                            label: I18n.t("Close this panel");
+                            danger: true;
+                            clicked => { root.close-parked(panel.index); }
+                        }
+                    }
+                }
+            }
+
+            Rectangle { height: 4px; }
+
+            Rectangle { vertical-stretch: 1; }
+
+            // ── the add row ──
+            HorizontalLayout {
+                height: 40px;
+                spacing: 4px;
+
+                for kind in [
+                    PaneKind.media, PaneKind.preview,
+                    PaneKind.inspector, PaneKind.timeline,
+                ]: Rectangle {
+                    horizontal-stretch: 1;
+                    border-radius: Theme.r-sm;
+                    background: add-touch.has-hover ? Theme.field : Theme.well;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            glyph: Panes.glyph(kind);
+                            size: 15px;
+                            tint: add-touch.has-hover ? Theme.fg : Theme.fg-muted;
+                        }
+                    }
+
+                    add-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => { root.add(kind); }
+                    }
+                }
+            }
+        }
+    }
+}

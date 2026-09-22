@@ -709,5 +709,16 @@
   "{0} months ago": "{0} ماه پیش",
   "{0} strokes": "{0} Stroke",
   "{0}m {1}s left": "{0}m {1}s باقی مانده",
-  "{0}s left": "{0}s باقی مانده"
+  "{0}s left": "{0}s باقی مانده",
+  "Panel menu": "منوی پنل‌ها",
+  "Close the panel menu": "بستن منوی پنل‌ها",
+  "Parked panels": "پنل‌های موقت",
+  "No parked panels. Add one with + in the title bar.": "پنل موقتی نیست. با + در نوار عنوان اضافه کنید.",
+  "Show in the edit area": "نمایش در area ویرایش",
+  "Close this panel": "بستن این پنل",
+  "Put in the upper slot": "گذاشتن در اسلات بالا",
+  "Put in the lower slot": "گذاشتن در اسلات پایین",
+  "In the edit area": "در area ویرایش",
+  "Upper": "بالا",
+  "Lower": "پایین"
 }

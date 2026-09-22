@@ -715,5 +715,16 @@
   "What a connection must present before its first call. Left empty, the server makes one up each time it starts and shows it here.": "连接在首次调用前必须出示的内容。留空时，服务器每次启动都会自行生成一个并显示在这里。",
   "Decode on the hardware": "Decode on the hardware",
   "Decoding": "Decoding",
-  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before."
+  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.",
+  "Panel menu": "面板菜单",
+  "Close the panel menu": "关闭面板菜单",
+  "Parked panels": "暂存面板",
+  "No parked panels. Add one with + in the title bar.": "没有暂存面板。用标题栏的 ＋ 添加。",
+  "Show in the edit area": "放入编辑区",
+  "Close this panel": "关闭此面板",
+  "Put in the upper slot": "放到上面的位置",
+  "Put in the lower slot": "放到下面的位置",
+  "In the edit area": "编辑区当前",
+  "Upper": "上",
+  "Lower": "下"
 }

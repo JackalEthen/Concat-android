@@ -733,5 +733,16 @@
   "{0} months ago": "{0} months ago",
   "{0} strokes": "{0} strokes",
   "{0}m {1}s left": "{0}m {1}s left",
-  "{0}s left": "{0}s left"
+  "{0}s left": "{0}s left",
+  "Panel menu": "Panel menu",
+  "Close the panel menu": "Close the panel menu",
+  "Parked panels": "Parked panels",
+  "No parked panels. Add one with + in the title bar.": "No parked panels. Add one with + in the title bar.",
+  "Show in the edit area": "Show in the edit area",
+  "Close this panel": "Close this panel",
+  "Put in the upper slot": "Put in the upper slot",
+  "Put in the lower slot": "Put in the lower slot",
+  "In the edit area": "In the edit area",
+  "Upper": "Upper",
+  "Lower": "Lower"
 }

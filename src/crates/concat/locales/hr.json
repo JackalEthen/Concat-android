@@ -715,5 +715,16 @@
   "What a connection must present before its first call. Left empty, the server makes one up each time it starts and shows it here.": "Što veza mora predočiti prije prvog poziva. Ostane li prazno, poslužitelj ga sam smisli pri svakom pokretanju i prikaže ovdje.",
   "Decode on the hardware": "Decode on the hardware",
   "Decoding": "Decoding",
-  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before."
+  "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.": "On, video decodes on this machine's own hardware, which is what makes 4K play on a laptop. A file the hardware will not take decodes in software as before.",
+  "Panel menu": "Izbornik panela",
+  "Close the panel menu": "Zatvori izbornik panela",
+  "Parked panels": "Parkirani paneli",
+  "No parked panels. Add one with + in the title bar.": "Nema parkiranih panela. Dodajte jedan putem + na naslovnoj traci.",
+  "Show in the edit area": "Prikaži u području uređivanja",
+  "Close this panel": "Zatvori ovaj panel",
+  "Put in the upper slot": "Stavi u gornji utor",
+  "Put in the lower slot": "Stavi u donji utor",
+  "In the edit area": "U području uređivanja",
+  "Upper": "Gore",
+  "Lower": "Dolje"
 }
