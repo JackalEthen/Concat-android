@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 # The window, whole. Slint's android-activity backend is chosen by the
 # window's own manifest for this target; this crate only names the
 # activity's entry point.
-concat.workspace = true
+concat = { path = "../concat", default-features = false }
 slint = { version = "1.17", default-features = false, features = [
     "std",
     "backend-android-activity-06",
@@ -47,6 +47,7 @@ runtime_libs = "../../vendor/sherpa-onnx/jniLibs"
 # The launcher icon, at every density Android asks for; made from the
 # repository's logo by scripts/generate-icons.sh.
 resources = "res"
+assets = "assets"
 
 [package.metadata.android.sdk]
 # Android 8.0: AAudio, the audio path the engine plays through.

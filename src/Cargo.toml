@@ -127,3 +127,7 @@ incremental = false
 
 [profile.test]
 incremental = false
+
+# ponytail: cross-clang build drops whisper's MSVC-only /utf-8 flag
+[patch.crates-io]
+whisper-rs-sys = { path = "vendor/whisper-rs-sys-0.15.0" }

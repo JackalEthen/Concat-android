@@ -6,7 +6,7 @@ import { Theme } from "theme/theme.slint";
 import { Glyph, Icon } from "icons.slint";
 import { IconButton } from "primitives/panel.slint";
 import { ParkedPanel } from "dock.slint";
-import { Panes, PaneKind } from "workspace/pane-switcher.slint";
+import { Panes } from "workspace/pane-switcher.slint";
 import { Editor } from "editor.slint";
 
 // The compact panel drawer: where the edit area's spare panels live.
@@ -32,7 +32,6 @@ export component PanelDrawer inherits Rectangle {
 
     callback summon(index: int, slot: int);
     callback close-parked(index: int);
-    callback add(kind: PaneKind);
     callback closed();
 
     visible: root.open;
@@ -171,35 +170,6 @@ export component PanelDrawer inherits Rectangle {
             Rectangle { height: 4px; }
 
             Rectangle { vertical-stretch: 1; }
-
-            // ── the add row ──
-            HorizontalLayout {
-                height: 40px;
-                spacing: 4px;
-
-                for kind in [
-                    PaneKind.media, PaneKind.preview,
-                    PaneKind.inspector, PaneKind.timeline,
-                ]: Rectangle {
-                    horizontal-stretch: 1;
-                    border-radius: Theme.r-sm;
-                    background: add-touch.has-hover ? Theme.field : Theme.well;
-
-                    VerticalLayout {
-                        alignment: center;
-                        Icon {
-                            glyph: Panes.glyph(kind);
-                            size: 15px;
-                            tint: add-touch.has-hover ? Theme.fg : Theme.fg-muted;
-                        }
-                    }
-
-                    add-touch := TouchArea {
-                        mouse-cursor: pointer;
-                        clicked => { root.add(kind); }
-                    }
-                }
-            }
         }
     }
 }

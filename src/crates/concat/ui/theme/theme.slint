@@ -53,8 +53,10 @@ export global Theme {
     // Both are Hanken Grotesk, the one face this build bundles (app.slint).
     // The split between the roles stays so that the two can differ again
     // without touching a single element.
-    out property <string> font: "Hanken Grotesk";
-    out property <string> font-technical: "Hanken Grotesk";
+    // Follow the system font entirely (user-switchable via OS/theme store): an
+    // empty family makes Slint fall through to the platform default chain.
+    in-out property <string> font: "";
+    in-out property <string> font-technical: "";
     /// The scale. `fs` is the body size everything inherits; the two either
     /// side of it are the dense readout and the panel title. `xl` is for the
     /// few lines that are content rather than chrome — a project's name in a

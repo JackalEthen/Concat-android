@@ -251,6 +251,47 @@ mod picker {
     }
 }
 
+/// Copies the bundled CJK font out of the APK's assets and points
+/// `SLINT_FONT_PATH` at it, which the font stack reads when it first
+/// builds its collection. A no-op when the asset is missing or the
+/// file is already in place.
+fn extract_cjk_font(app: &slint::android::AndroidApp) {
+    use std::ffi::CString;
+    use std::io::Read;
+
+    const ASSET: &str = "NotoSansCJK-Regular.ttc";
+    let Some(internal) = app.internal_data_path() else {
+        return;
+    };
+    let out = internal.join(ASSET);
+    if out.exists() {
+        // SAFETY: single-threaded startup, before any reader spawns.
+        unsafe { std::env::set_var("SLINT_FONT_PATH", &out) };
+        return;
+    }
+    let Some(asset) = app
+        .asset_manager()
+        .open(&CString::new(ASSET).expect("no interior NULs"))
+    else {
+        log::warn!("no {ASSET} in the apk's assets; CJK may not render");
+        return;
+    };
+    let mut asset = asset;
+    let mut bytes = Vec::with_capacity(asset.length());
+    if asset.read_to_end(&mut bytes).is_err() {
+        log::warn!("could not read {ASSET} from the assets");
+        return;
+    }
+    match std::fs::write(&out, &bytes) {
+        Ok(()) => {
+            log::info!("CJK font staged: {}", out.display());
+            // SAFETY: as above, single-threaded startup.
+            unsafe { std::env::set_var("SLINT_FONT_PATH", &out) };
+        }
+        Err(error) => log::warn!("could not stage {ASSET}: {error}"),
+    }
+}
+
 /// Called by the activity's native glue; the name is the contract.
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
@@ -259,6 +300,17 @@ fn android_main(app: slint::android::AndroidApp) {
     activity::name_directories(&app);
     activity::open_log();
     log::info!("Concat {} starting", env!("CARGO_PKG_VERSION"));
+    // The CJK font travels in the APK's assets: some ROMs (Huawei's and
+    // OPPO's, at least) either keep their Chinese families out of
+    // /system/etc/fonts.xml or point them at private fonts whose
+    // postscript names the third-party font stack cannot match, so the
+    // fallback table never learns about Han and every Chinese glyph
+    // boxes. Handing Noto Sans CJK to Slint through SLINT_FONT_PATH puts
+    // it at the end of every fallback chain. This must happen BEFORE
+    // slint::android::init(): init builds the fontique collection, which
+    // reads SLINT_FONT_PATH exactly once, and a variable set later is
+    // never seen.
+    extract_cjk_font(&app);
     if let Err(error) = slint::android::init(app.clone()) {
         log::error!("could not start the Android backend: {error}");
         return;
@@ -269,3 +321,5 @@ fn android_main(app: slint::android::AndroidApp) {
         log::error!("{error}");
     }
 }
+
+

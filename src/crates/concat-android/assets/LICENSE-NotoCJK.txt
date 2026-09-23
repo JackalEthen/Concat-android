@@ -1,0 +1,6 @@
+﻿NotoSansCJK-Regular.ttc
+
+Source: pulled from an Android device system image (/system/fonts).
+License: SIL Open Font License 1.1 (see https://fonts.google.com/noto/specimen/Noto+Sans+CJK+SC).
+The Noto fonts are copyright Google and licensed under the OFL, which
+permits bundling and redistribution with software.
