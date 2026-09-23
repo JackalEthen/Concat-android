@@ -1,25 +1,28 @@
 <div align="center">
+
 <table width="100%">
   <tr>
     <td align="left" width="120">
       <img src="https://cdn.jsdelivr.net/gh/jub0t/Concat@main/assets/logo-dark.png" alt="Concat" width="100" />
     </td>
     <td align="right">
-      <h1>Concat</h1>
-      <h3 style="margin-top: -10px;">The truly free, and open-source cross-platform CapCut replacement.</h3>
+      <h1>Concat for Android</h1>
+      <h3 style="margin-top: -10px;">The truly free, open-source video editor — rebuilt for your pocket.</h3>
     </td>
   </tr>
 </table>
 
-<p align="center">
-  <a href="https://github.com/jub0t/Concat/releases"><img src="https://img.shields.io/github/downloads/jub0t/concat/total?style=flat&logo=github&logoColor=F8F8F8&label=Downloads&labelColor=000000&color=c6f432" alt="Total Downloads" /></a>
-  <a href="https://github.com/jub0t/Concat/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/jub0t/Concat/ci.yml?style=flat&logo=githubactions&logoColor=F8F8F8&label=Build&labelColor=000000" alt="Build Status" /></a>
-  <a href="https://github.com/jub0t/Concat/releases"><img src="https://img.shields.io/badge/Version-0.2.3-c6f432?style=flat&logo=semver&logoColor=F8F8F8&labelColor=000000" alt="Concat Version 0.2.3" /></a>
-  <a href="https://discord.gg/DVuPfpXfqP"><img src="https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?style=flat&logo=discord&logoColor=F8F8F8&labelColor=000000" alt="Join Concat Discord" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL%20v3-c6f432?style=flat&logo=gnu&logoColor=F8F8F8&labelColor=000000" alt="License: AGPL-3.0-or-later" /></a>
+<p>
+  <a href="README-zh.md">简体中文</a> ·
+  <b>English</b>
 </p>
 
-<img src="https://cdn.jsdelivr.net/gh/jub0t/Concat@main/assets/editor.png" alt="Concat editor" width="100%" />
+<p>
+  <img src="https://img.shields.io/badge/Platform-Android%20arm64-c6f432?style=flat&logo=android&logoColor=F8F8F8&labelColor=000000" alt="Platform: Android arm64" />
+  <img src="https://img.shields.io/badge/UI-Compact%20Mode-c6f432?style=flat&labelColor=000000" alt="UI: Compact Mode" />
+  <img src="https://img.shields.io/badge/Languages-14-c6f432?style=flat&labelColor=000000" alt="Languages: 14" />
+  <img src="https://img.shields.io/badge/License-AGPL%20v3-c6f432?style=flat&logo=gnu&logoColor=F8F8F8&labelColor=000000" alt="License: AGPL v3" />
+</p>
 
 </div>
 
@@ -27,84 +30,122 @@
 
 ## About
 
-Concat is everything you use CapCut for. No watermarks. No paywalls. No subscriptions.
+This is the Android home of [Concat](https://github.com/jub0t/Concat) —
+the truly free, open-source cross-platform CapCut replacement. The
+desktop engine is unchanged; what this fork adds is a **phone-first
+compact interface** and the Android-specific engineering that makes a
+video editor actually usable in one hand.
 
-It runs entirely on your machine, powered by a native Rust engine. Install it and start cutting. No account, no setup.
+Phone screens are not small desktops. Squeezing a timeline editor into
+a portrait window makes every target smaller than a fingertip. So
+instead of shrinking the desktop layout, compact mode gives Concat a
+**second layout, designed from the phone up** — same engine, same
+project files, a UI that behaves the way thumbs do.
 
-## Highlights
+No watermarks. No paywalls. No account. 100% local.
 
-- 🚫 **No watermarks.** No account. No paywall.
-- 🔒 **100% local.** Nothing leaves your machine.
-- 🎬 **Multi-track editing.** Several timelines per project.
-- ✂️ **Cut fast.** Split, trim, merge, transitions, speed control.
-- 💬 **Auto-captions.** Runs on your machine, offline.
-- 🗣️ **Text-to-Speech.** Free, local voices.
-- 🎙️ **Voice filters.** Clean up or play with your sound.
-- 📝 **Titles and styled text.**
-- 📦 **Templates.** Build an edit once, reuse it.
-- 🖥️ **macOS, Windows and Linux.** Same app everywhere.
-- 🌍 **Twelve languages.** Add one with a single JSON file, see [TRANSLATING.md](TRANSLATING.md).
+## Compact mode
 
-## Get started
+A window narrower than 860 px — which is every phone — switches to the
+compact layout automatically. Rotate or widen the window and the
+desktop layout returns exactly as it was.
 
-Concat is currently in **Beta version (pre-release)**. **Download** the latest build from [Releases](https://github.com/jub0t/Concat/releases).
+<table>
+<tr><td width="50%">
 
-**Reporting something:** every run writes a log, and Settings › About has the button that opens it along with the one that copies your system information. Attach both to an [issue](https://github.com/jub0t/Concat/issues) and the report arrives with everything it needs. The last ten runs are kept, so yesterday's is still there; nothing is ever sent anywhere on its own.
+### 🎛️ Two-row transport
 
-**Platform support:**
+Play, split and the timecode live in a fixed two-row bar with generous
+touch targets, centred by stretch spacers. No pinch-zooming to hit
+play.
 
-- ✅ **Windows**
-  - ✅ x86_64
-- ✅ **macOS** — unsigned binaries; run:
-  `xattr -dr com.apple.quarantine /Applications/Concat.app`
-  - ✅ Intel
-  - ✅ Silicon
-- ✅ **Linux**
-  - ✅ ARM
-  - ✅ x86_64
-- ✅ **Android**
-  - ✅ Phones
-  - ✅ Tablets
-- 🧪 **iOS / iPadOS**
-  - 🧪 iPhone
-  - 🧪 iPad
+</td><td width="50%">
 
-**Status:** ✅ Supported · 🚧 Work in progress · 🧪 To be tested
+### 🎚️ Track headers that fit a hand
 
-**System requirements:**
+A fixed 44 px header column per track carries lock / show / mute
+switches. Long-press opens a scrim overlay with the remove action —
+no buried context menus.
 
-Concat runs everything on your machine, so the hardware sets the ceiling. The minimum column is what a build will run on at all; the recommended column is what makes 1080p editing feel smooth and keeps 4K exports and captions from being a wait.
+</td></tr>
+<tr><td>
 
-| | Minimum | Recommended |
-|---|---|---|
-| **CPU** | Any 64-bit processor from 2013 or later | 6 cores or more |
-| **GPU** | None. Without a usable GPU the window and monitor fall back to the CPU | Any GPU with Metal (macOS), DirectX 12 (Windows) or Vulkan (Linux) |
-| **RAM** | **4 GB** | **16 GB** for 4K timelines and the larger caption models |
-| **Storage** | **500 MB** for the app and the smallest caption model | **2 GB** for every optional model, plus room for projects and exports |
+### 📑 The panel drawer
 
-Optional models download from the settings panel on first use and then never need the network again: auto-captions 78 MB to 488 MB depending on the whisper size you pick, text-to-speech 132 MB or 349 MB, person cutout 15 MB, object cutout 179 MB, and the cutout brush 40 MB.
+The edit area holds at most two panels; everything else parks in a
+drawer. Tap ↑/↓ on a parked row to take a seat — the displaced panel
+parks itself back. The last seat refuses to close.
 
-## How to Contribute
+</td><td>
 
-> [!IMPORTANT]
-> The best way to contribute is to grab a build from the [Releases](https://github.com/jub0t/Concat/releases) page and use it: find where it breaks, and say where it could be better.
->
-> Ready to write code? [CONTRIBUTING.md](./CONTRIBUTING.md) covers setup, the layout of the tree, the checks to run, and how contributions are licensed. [ROADMAP.MD](./ROADMAP.MD) says where the project is going, and [this Discussion](https://github.com/jub0t/Concat/discussions/3) is where it was announced.
-> 
-> Contributors are free to claim a `@Contributor` role in the Discord server, just ask for it.
+### 🍔 An icon title bar
 
-## Contributors
+A hamburger replaces the three text menus, the project name sits
+inline, and the logo opens the drawer. No window buttons — Android
+already has them.
 
-<a href="https://github.com/jub0t/Concat/graphs/contributors">
-  <img alt="Contributors" src="https://contrib.rocks/image?repo=jub0t/concat">
-</a>
+</td></tr>
+<tr><td>
 
-## ⭐ Star History
+### 👆 Gestures that respect children
 
-<a href="https://www.star-history.com/?repos=jub0t%2Fconcat&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=jub0t/concat&type=date&theme=dark&logscale&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=jub0t/concat&type=date&logscale&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=jub0t/concat&type=date&logscale&legend=top-left" />
- </picture>
-</a>
+A vertical swipe scrolls the panel stack even when a child control
+handles its own gestures.
+
+</td><td>
+
+### 🧭 Two-level settings
+
+Settings navigates in two levels instead of one endless page, and
+modals are clamped to the window.
+
+</td></tr>
+</table>
+
+## Android-specific engineering
+
+Beyond the layout, this fork fixes what only shows up on phones:
+
+- **CJK text renders everywhere.** Some ROMs (Huawei, OPPO) ship font
+  configurations a third-party font stack cannot match — Chinese
+  glyphs boxed while Japanese rendered fine. Concat bundles
+  *Noto Sans CJK* (SIL OFL) in the APK, stages it before the font
+  collection is built, and appends it to every script's fallback
+  chain. All 14 interface languages render correctly, on any ROM.
+- **Document picking, natively.** The system file picker is reached
+  through a small Java fragment compiled into the APK — picked files
+  are copied into app storage and handed to the editor by path.
+- **Logging that survives the cable.** Everything the window prints
+  goes to `logcat` (tag `concat`) *and* to a log file reachable from
+  Settings — because a phone in somebody's hand has no cable.
+- **Hardware decoding stays optional.** The decode-on-hardware switch
+  is right there in settings.
+
+## Building it yourself
+
+You will need the Android SDK + NDK, a Rust `aarch64-linux-android`
+target, and about an hour the first time.
+
+```bash
+cd src
+cargo apk build -p concat-android --target aarch64-linux-android
+adb install target/debug/apk/Concat.apk
+```
+
+FFmpeg and the engine cross-compile from source (`src/scripts/`);
+sherpa-onnx and Skia come from their prebuilt releases.
+
+## Credits & license
+
+- **Upstream project**: [jub0t/Concat](https://github.com/jub0t/Concat) —
+  the desktop engine, and this fork's reason to exist.
+- **Font**: [Noto Sans CJK](https://fonts.google.com/noto) by Google,
+  SIL Open Font License.
+- Licensed **AGPL-3.0-or-later**, same as upstream. Contributions
+  welcome.
+
+---
+
+<div align="center">
+<sub>No watermarks · No paywalls · No account · 100% local</sub>
+</div>
