@@ -48,6 +48,9 @@ desktop.ini
 .env
 .env.local
 
+# Machine-specific Android build notes (local paths, personal device names)
+/ANDROID-BUILD.md
+
 # An FFmpeg development build unpacked locally for the linked engine
 # (headers + import libraries), pointed at with FFMPEG_DIR. Large and
 # machine-specific.
